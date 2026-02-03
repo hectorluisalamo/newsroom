@@ -1,3 +1,5 @@
+STATUS: PUBLIC REPOSITORY — portfolio-safe, auditable, publishable code only.
+
 ## Governing Documents (Authoritative Order)
 
 1. docs/BLUEPRINT.md — system blueprint and operating model
@@ -6,6 +8,7 @@
 4. docs/prd/*.md — scoped work specifications
 
 Claude MUST:
+- Assume all code, documentation, and commit history in this repository are public-facing and externally visible.
 - Read docs/BLUEPRINT.md before starting any PRD or implementation
 - Treat the Blueprint as binding unless explicitly revised
 - Propose changes to the Blueprint only via docs/decisions.md or an approved PRD
