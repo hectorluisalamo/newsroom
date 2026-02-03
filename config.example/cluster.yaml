@@ -1,0 +1,17 @@
+tfidf:
+  max_features: 5000
+  ngram_range: [1, 2]
+  stop_words: "english"
+  min_df: 2
+  # custom stop words to add on top of sklearn's english list
+  extra_stop_words: []
+
+clustering:
+  method: "agglomerative"
+  distance_threshold: 0.7         # cosine distance cutoff
+  linkage: "average"
+
+keywords:
+  top_n: 5
+  # words too generic to be useful as centroid keywords
+  generic_filter: ["AI", "data", "new", "technology", "tech", "report", "says"]

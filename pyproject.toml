@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "newsroom"
+version = "0.1.0"
+description = "Synthetic newsroom CLI that produces Substack-ready opinion columns from beat-specific research briefs and writer voices."
+requires-python = ">=3.12"
+dependencies = [
+    "httpx",
+    "feedparser",
+    "pyyaml",
+    "pydantic",
+    "rich",
+    "anthropic",
+    "scikit-learn",
+    "numpy",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "pytest-mock",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/newsroom"]
+
+[tool.ruff]
+src = ["src", "tests"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

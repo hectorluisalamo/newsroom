@@ -1,0 +1,18 @@
+hedging:
+  max_ratio: 0.15
+  phrases:
+    - "it remains to be seen"
+    - "only time will tell"
+    - "it's unclear"
+    - "some experts say"
+    - "arguably"
+    - "perhaps"
+
+source_attribution:
+  require_citation_near_stats: true
+  citation_pattern: "\\[src:\\d+\\]"    # regex for [src:N] markers
+
+voice_drift:
+  max_avg_sentence_length: 35
+  min_avg_sentence_length: 10
+  max_sentence_length: 60

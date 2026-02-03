@@ -99,6 +99,7 @@ For each PRD:
 4. Claude implements in small, test-driven steps
 5. Claude runs verification
 6. Claude commits changes
+   - Never include `Co-Authored-By` trailers in commit messages
 7. Claude updates progress notes
 
 No step may be skipped unless explicitly authorized.
@@ -136,7 +137,7 @@ Claude MUST update it with:
 - What was changed
 - Why it was changed
 - Known issues
-- Next steps
+- Next steps: suggest the title and rough scope of the next PRD — but do NOT draft the next PRD
 
 Claude MUST NOT rely on conversational memory.
 
