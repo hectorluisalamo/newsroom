@@ -31,3 +31,5 @@ Explicitly list what is NOT being done.
 - Tests added or updated
 - No unrelated changes
 - Documentation updated if behavior changed
+- `docs/agent-notes.md` updated with PRD completion note
+- Single commit message drafted referencing PRD
