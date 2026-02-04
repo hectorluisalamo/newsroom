@@ -99,10 +99,13 @@ For each PRD:
 2. Claude proposes a brief plan
 3. Human approves or corrects plan
 4. Claude implements in small, test-driven steps
+  - Whenever possible, try not to implement the changes yourself. Depending on the complexity of the implementation, kick off several coder-agents to run in the background and, if possible, in parallel.
 5. Claude runs verification
-6. Claude commits changes
+6. Claude kicks of coderabbit:code-reviewer agent to review the changes.
+  - If coderabbit:code-reviewer finds errors, Claude kicks of as many coder-agents as needed to implement the corrections — as always, wherever possible, running in the background and in parallel.
+7. Claude commits changes
    - Never include `Co-Authored-By` trailers in commit messages
-7. Claude updates progress notes
+8. Claude updates progress notes
 
 No step may be skipped unless explicitly authorized.
 

@@ -17,3 +17,5 @@ out/
 
 # Runtime config is private / overlayed locally
 config/
+
+.claude/
