@@ -13,6 +13,16 @@
 - CodeRabbit review clean (no material findings).
 - Known issues: none.
 
+## Phase 1: Core Data Models (PRD 001)
+
+- Implemented 8 Pydantic v2 models in `src/newsroom/models.py`: FeedItem, BriefCluster, BriefPack, Pitch, PitchSet, Draft, QAFinding, QAReport.
+- Centralized UTC-aware datetime validator (`_require_utc`) shared across all models with datetime fields.
+- Validators: summary max 500 chars, recency_score 0.0–1.0, source_urls min 3 / truncate-to-first-10, pitches exactly 3.
+- `Draft.word_count` left informational (no model-level validation).
+- 41 tests in `tests/unit/test_models.py` covering all 13 acceptance criteria.
+- `verify.sh` passes: Ruff lint, Ruff format, pytest (53 tests).
+- Known issues: none.
+
 ### Next Steps
 
-- **PRD 001: Pydantic Models & Settings Loading** — Define all Pydantic data models in `models.py` and implement the settings loaders in `settings.py` and `time_anchor.py`. This corresponds to BLUEPRINT.md Phase 1 and gives subsequent phases their typed data foundation.
+- **PRD 002: Settings Loading & Time Anchor** — Implement `settings.py` (YAML + Markdown config loaders) and `time_anchor.py` (`--now` / `NEWSROOM_NOW` resolution). Completes the typed data foundation for subsequent pipeline phases.
