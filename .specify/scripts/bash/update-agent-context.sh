@@ -52,6 +52,9 @@ set -o pipefail
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
+# Array to track temp files for cleanup
+declare -a TEMP_FILES=()
+
 # Get all paths and variables from common functions
 eval $(get_feature_paths)
 
@@ -110,6 +113,9 @@ cleanup() {
     local exit_code=$?
     rm -f /tmp/agent_update_*_$$
     rm -f /tmp/manual_additions_$$
+    for f in "${TEMP_FILES[@]:-}"; do
+        rm -f "$f"
+    done
     exit $exit_code
 }
 
@@ -302,9 +308,9 @@ create_new_agent_file() {
     
     # Perform substitutions with error checking using safer approach
     # Escape special characters for sed by using a different delimiter or escaping
-    local escaped_lang=$(printf '%s\n' "$NEW_LANG" | sed 's/[\[\.*^$()+{}|]/\\&/g')
-    local escaped_framework=$(printf '%s\n' "$NEW_FRAMEWORK" | sed 's/[\[\.*^$()+{}|]/\\&/g')
-    local escaped_branch=$(printf '%s\n' "$CURRENT_BRANCH" | sed 's/[\[\.*^$()+{}|]/\\&/g')
+    local escaped_lang=$(printf '%s\n' "$NEW_LANG" | sed 's/[[\.*^$()+{}|?/&]/\\&/g')
+    local escaped_framework=$(printf '%s\n' "$NEW_FRAMEWORK" | sed 's/[[\.*^$()+{}|?/&]/\\&/g')
+    local escaped_branch=$(printf '%s\n' "$CURRENT_BRANCH" | sed 's/[[\.*^$()+{}|?/&]/\\&/g')
     
     # Build technology stack and recent change strings conditionally
     local tech_stack
@@ -372,7 +378,8 @@ update_existing_agent_file() {
         log_error "Failed to create temporary file"
         return 1
     }
-    
+    TEMP_FILES+=("$temp_file")
+
     # Process the file in one pass
     local tech_stack=$(format_technology_stack "$NEW_LANG" "$NEW_FRAMEWORK")
     local new_tech_entries=()
@@ -457,7 +464,7 @@ update_existing_agent_file() {
             # Keep only first 2 existing changes
             if [[ $existing_changes_count -lt 2 ]]; then
                 echo "$line" >> "$temp_file"
-                ((existing_changes_count++))
+                ((existing_changes_count++)) || true
             fi
             continue
         fi
@@ -537,7 +544,8 @@ update_agent_file() {
             log_error "Failed to create temporary file"
             return 1
         }
-        
+        TEMP_FILES+=("$temp_file")
+
         if create_new_agent_file "$target_file" "$temp_file" "$project_name" "$current_date"; then
             if mv "$temp_file" "$target_file"; then
                 log_success "Created new $agent_name context file"
@@ -643,83 +651,108 @@ update_specific_agent() {
 
 update_all_existing_agents() {
     local found_agent=false
-    
+    local -a updated_files=()
+
+    # Helper to check if file was already updated
+    file_already_updated() {
+        local file="$1"
+        for f in "${updated_files[@]:-}"; do
+            [[ "$f" == "$file" ]] && return 0
+        done
+        return 1
+    }
+
     # Check each possible agent file and update if it exists
-    if [[ -f "$CLAUDE_FILE" ]]; then
+    if [[ -f "$CLAUDE_FILE" ]] && ! file_already_updated "$CLAUDE_FILE"; then
         update_agent_file "$CLAUDE_FILE" "Claude Code"
+        updated_files+=("$CLAUDE_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$GEMINI_FILE" ]]; then
+
+    if [[ -f "$GEMINI_FILE" ]] && ! file_already_updated "$GEMINI_FILE"; then
         update_agent_file "$GEMINI_FILE" "Gemini CLI"
+        updated_files+=("$GEMINI_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$COPILOT_FILE" ]]; then
+
+    if [[ -f "$COPILOT_FILE" ]] && ! file_already_updated "$COPILOT_FILE"; then
         update_agent_file "$COPILOT_FILE" "GitHub Copilot"
+        updated_files+=("$COPILOT_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$CURSOR_FILE" ]]; then
+
+    if [[ -f "$CURSOR_FILE" ]] && ! file_already_updated "$CURSOR_FILE"; then
         update_agent_file "$CURSOR_FILE" "Cursor IDE"
+        updated_files+=("$CURSOR_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$QWEN_FILE" ]]; then
+
+    if [[ -f "$QWEN_FILE" ]] && ! file_already_updated "$QWEN_FILE"; then
         update_agent_file "$QWEN_FILE" "Qwen Code"
+        updated_files+=("$QWEN_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$AGENTS_FILE" ]]; then
+
+    if [[ -f "$AGENTS_FILE" ]] && ! file_already_updated "$AGENTS_FILE"; then
         update_agent_file "$AGENTS_FILE" "Codex/opencode"
+        updated_files+=("$AGENTS_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$WINDSURF_FILE" ]]; then
+
+    if [[ -f "$WINDSURF_FILE" ]] && ! file_already_updated "$WINDSURF_FILE"; then
         update_agent_file "$WINDSURF_FILE" "Windsurf"
+        updated_files+=("$WINDSURF_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$KILOCODE_FILE" ]]; then
+
+    if [[ -f "$KILOCODE_FILE" ]] && ! file_already_updated "$KILOCODE_FILE"; then
         update_agent_file "$KILOCODE_FILE" "Kilo Code"
+        updated_files+=("$KILOCODE_FILE")
         found_agent=true
     fi
 
-    if [[ -f "$AUGGIE_FILE" ]]; then
+    if [[ -f "$AUGGIE_FILE" ]] && ! file_already_updated "$AUGGIE_FILE"; then
         update_agent_file "$AUGGIE_FILE" "Auggie CLI"
+        updated_files+=("$AUGGIE_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$ROO_FILE" ]]; then
+
+    if [[ -f "$ROO_FILE" ]] && ! file_already_updated "$ROO_FILE"; then
         update_agent_file "$ROO_FILE" "Roo Code"
+        updated_files+=("$ROO_FILE")
         found_agent=true
     fi
 
-    if [[ -f "$CODEBUDDY_FILE" ]]; then
+    if [[ -f "$CODEBUDDY_FILE" ]] && ! file_already_updated "$CODEBUDDY_FILE"; then
         update_agent_file "$CODEBUDDY_FILE" "CodeBuddy CLI"
+        updated_files+=("$CODEBUDDY_FILE")
         found_agent=true
     fi
 
-    if [[ -f "$SHAI_FILE" ]]; then
+    if [[ -f "$SHAI_FILE" ]] && ! file_already_updated "$SHAI_FILE"; then
         update_agent_file "$SHAI_FILE" "SHAI"
+        updated_files+=("$SHAI_FILE")
         found_agent=true
     fi
 
-    if [[ -f "$QODER_FILE" ]]; then
+    if [[ -f "$QODER_FILE" ]] && ! file_already_updated "$QODER_FILE"; then
         update_agent_file "$QODER_FILE" "Qoder CLI"
+        updated_files+=("$QODER_FILE")
         found_agent=true
     fi
 
-    if [[ -f "$Q_FILE" ]]; then
+    if [[ -f "$Q_FILE" ]] && ! file_already_updated "$Q_FILE"; then
         update_agent_file "$Q_FILE" "Amazon Q Developer CLI"
+        updated_files+=("$Q_FILE")
         found_agent=true
     fi
-    
-    if [[ -f "$BOB_FILE" ]]; then
+
+    if [[ -f "$BOB_FILE" ]] && ! file_already_updated "$BOB_FILE"; then
         update_agent_file "$BOB_FILE" "IBM Bob"
+        updated_files+=("$BOB_FILE")
         found_agent=true
     fi
-    
+
     # If no agent files exist, create a default Claude file
     if [[ "$found_agent" == false ]]; then
         log_info "No existing agent files found, creating default Claude file..."
@@ -744,7 +777,7 @@ print_summary() {
     
     echo
 
-    log_info "Usage: $0 [claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|codebuddy|shai|q|bob|qoder]"
+    log_info "Usage: $0 [claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|roo|codebuddy|qoder|amp|shai|q|bob]"
 }
 
 #==============================================================================
