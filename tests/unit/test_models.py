@@ -565,6 +565,24 @@ class TestQAConfig:
         assert vd.min_avg_sentence_length == 8
 
 
+class TestVoiceDriftConfigValidation:
+    def test_rejects_min_greater_than_max(self):
+        with pytest.raises(ValidationError, match="min_avg_sentence_length"):
+            VoiceDriftConfig(
+                max_avg_sentence_length=10,
+                min_avg_sentence_length=20,
+                max_sentence_length=60,
+            )
+
+    def test_accepts_equal_min_max(self):
+        vd = VoiceDriftConfig(
+            max_avg_sentence_length=15,
+            min_avg_sentence_length=15,
+            max_sentence_length=60,
+        )
+        assert vd.min_avg_sentence_length == vd.max_avg_sentence_length
+
+
 # ---------------------------------------------------------------------------
 # Config models — ClusterConfig family
 # ---------------------------------------------------------------------------
@@ -653,6 +671,24 @@ class TestNgramRangeValidation:
             TfidfConfig(
                 max_features=5000,
                 ngram_range=[2, 1],
+                stop_words="english",
+                min_df=2,
+            )
+
+    def test_rejects_zero_min(self):
+        with pytest.raises(ValidationError, match="ngram_range"):
+            TfidfConfig(
+                max_features=5000,
+                ngram_range=[0, 2],
+                stop_words="english",
+                min_df=2,
+            )
+
+    def test_rejects_negative_value(self):
+        with pytest.raises(ValidationError, match="ngram_range"):
+            TfidfConfig(
+                max_features=5000,
+                ngram_range=[-1, 2],
                 stop_words="english",
                 min_df=2,
             )

@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl, field_validator, model_validator
 
 
 def _require_utc(value: datetime) -> datetime:
@@ -55,6 +55,16 @@ class VoiceDriftConfig(BaseModel):
     min_avg_sentence_length: int
     max_sentence_length: int
 
+    @model_validator(mode="after")
+    def _min_lte_max(self) -> VoiceDriftConfig:
+        if self.min_avg_sentence_length > self.max_avg_sentence_length:
+            msg = (
+                f"min_avg_sentence_length ({self.min_avg_sentence_length}) "
+                f"must be <= max_avg_sentence_length ({self.max_avg_sentence_length})"
+            )
+            raise ValueError(msg)
+        return self
+
 
 class QAConfig(BaseModel):
     """Aggregated QA check configuration from qa.yaml."""
@@ -78,6 +88,9 @@ class TfidfConfig(BaseModel):
     def _ngram_range_valid(cls, v: list[int]) -> list[int]:
         if len(v) != 2:
             msg = f"ngram_range must have exactly 2 elements, got {len(v)}"
+            raise ValueError(msg)
+        if v[0] < 1:
+            msg = f"ngram_range values must be >= 1, got {v}"
             raise ValueError(msg)
         if v[0] > v[1]:
             msg = f"ngram_range[0] must be <= ngram_range[1], got {v}"
