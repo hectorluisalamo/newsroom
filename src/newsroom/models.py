@@ -23,6 +23,102 @@ def _require_utc(value: datetime) -> datetime:
 
 
 # ---------------------------------------------------------------------------
+# Config models — loaded by settings.py from YAML/Markdown
+# ---------------------------------------------------------------------------
+
+
+class FeedSource(BaseModel):
+    """A single RSS feed source entry from sources.yaml."""
+
+    name: str
+    url: HttpUrl
+
+
+class HedgingConfig(BaseModel):
+    """Hedging check thresholds from qa.yaml."""
+
+    max_ratio: float
+    phrases: list[str]
+
+
+class SourceAttributionConfig(BaseModel):
+    """Source attribution check config from qa.yaml."""
+
+    require_citation_near_stats: bool
+    citation_pattern: str
+
+
+class VoiceDriftConfig(BaseModel):
+    """Voice drift check thresholds from qa.yaml."""
+
+    max_avg_sentence_length: int
+    min_avg_sentence_length: int
+    max_sentence_length: int
+
+
+class QAConfig(BaseModel):
+    """Aggregated QA check configuration from qa.yaml."""
+
+    hedging: HedgingConfig
+    source_attribution: SourceAttributionConfig
+    voice_drift: VoiceDriftConfig
+
+
+class TfidfConfig(BaseModel):
+    """TF-IDF vectorizer parameters from cluster.yaml."""
+
+    max_features: int
+    ngram_range: list[int]
+    stop_words: str
+    min_df: int
+    extra_stop_words: list[str] = []
+
+    @field_validator("ngram_range")
+    @classmethod
+    def _ngram_range_valid(cls, v: list[int]) -> list[int]:
+        if len(v) != 2:
+            msg = f"ngram_range must have exactly 2 elements, got {len(v)}"
+            raise ValueError(msg)
+        if v[0] > v[1]:
+            msg = f"ngram_range[0] must be <= ngram_range[1], got {v}"
+            raise ValueError(msg)
+        return v
+
+
+class ClusteringMethodConfig(BaseModel):
+    """Clustering algorithm parameters from cluster.yaml."""
+
+    method: str
+    distance_threshold: float
+    linkage: str
+
+
+class KeywordsConfig(BaseModel):
+    """Keyword extraction parameters from cluster.yaml."""
+
+    top_n: int
+    generic_filter: list[str] = []
+
+
+class ClusterConfig(BaseModel):
+    """Aggregated clustering configuration from cluster.yaml."""
+
+    tfidf: TfidfConfig
+    clustering: ClusteringMethodConfig
+    keywords: KeywordsConfig
+
+
+class VoiceConstitution(BaseModel):
+    """Parsed voice constitution from a beat's markdown file."""
+
+    beliefs: list[str]
+    tone: list[str]
+    forbidden_moves: list[str]
+    taboo_phrases: list[str]
+    required_habits: list[str]
+
+
+# ---------------------------------------------------------------------------
 # FeedItem — a single normalized RSS article
 # ---------------------------------------------------------------------------
 

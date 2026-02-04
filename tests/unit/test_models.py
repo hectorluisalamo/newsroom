@@ -10,12 +10,22 @@ from pydantic import ValidationError
 from newsroom.models import (
     BriefCluster,
     BriefPack,
+    ClusterConfig,
+    ClusteringMethodConfig,
     Draft,
     FeedItem,
+    FeedSource,
+    HedgingConfig,
+    KeywordsConfig,
     Pitch,
     PitchSet,
+    QAConfig,
     QAFinding,
     QAReport,
+    SourceAttributionConfig,
+    TfidfConfig,
+    VoiceConstitution,
+    VoiceDriftConfig,
 )
 
 # ---------------------------------------------------------------------------
@@ -432,3 +442,226 @@ class TestDefaults:
     def test_draft_token_usage_default(self):
         draft = _make_draft(token_usage=None)
         assert draft.token_usage is None
+
+
+# ---------------------------------------------------------------------------
+# Config models — FeedSource
+# ---------------------------------------------------------------------------
+
+
+class TestFeedSource:
+    def test_valid_construction(self):
+        source = FeedSource(
+            name="Ars Technica", url="https://feeds.arstechnica.com/feed"
+        )
+        assert source.name == "Ars Technica"
+
+    def test_round_trip(self):
+        source = FeedSource(
+            name="Ars Technica", url="https://feeds.arstechnica.com/feed"
+        )
+        json_str = source.model_dump_json()
+        restored = FeedSource.model_validate_json(json_str)
+        assert restored == source
+
+    def test_rejects_invalid_url(self):
+        with pytest.raises(ValidationError):
+            FeedSource(name="Bad", url="not-a-url")
+
+
+# ---------------------------------------------------------------------------
+# Config models — VoiceConstitution
+# ---------------------------------------------------------------------------
+
+
+def _make_voice_constitution(**overrides):
+    defaults = {
+        "beliefs": ["Tech is shaped by incentives."],
+        "tone": ["Conversational but informed."],
+        "forbidden_moves": ["Do not predict the future."],
+        "taboo_phrases": ["It remains to be seen"],
+        "required_habits": ["Every claim must trace to a source."],
+    }
+    defaults.update(overrides)
+    return VoiceConstitution(**defaults)
+
+
+class TestVoiceConstitution:
+    def test_valid_construction(self):
+        voice = _make_voice_constitution()
+        assert voice.beliefs == ["Tech is shaped by incentives."]
+        assert voice.taboo_phrases == ["It remains to be seen"]
+
+    def test_round_trip(self):
+        voice = _make_voice_constitution()
+        json_str = voice.model_dump_json()
+        restored = VoiceConstitution.model_validate_json(json_str)
+        assert restored == voice
+
+    def test_multiple_items_per_section(self):
+        voice = _make_voice_constitution(
+            taboo_phrases=["phrase one", "phrase two", "phrase three"],
+        )
+        assert len(voice.taboo_phrases) == 3
+
+    def test_empty_section_allowed(self):
+        voice = _make_voice_constitution(beliefs=[])
+        assert voice.beliefs == []
+
+
+# ---------------------------------------------------------------------------
+# Config models — QAConfig family
+# ---------------------------------------------------------------------------
+
+
+def _make_qa_config(**overrides):
+    defaults = {
+        "hedging": {"max_ratio": 0.15, "phrases": ["arguably", "perhaps"]},
+        "source_attribution": {
+            "require_citation_near_stats": True,
+            "citation_pattern": r"\[src:\d+\]",
+        },
+        "voice_drift": {
+            "max_avg_sentence_length": 35,
+            "min_avg_sentence_length": 10,
+            "max_sentence_length": 60,
+        },
+    }
+    defaults.update(overrides)
+    return QAConfig(**defaults)
+
+
+class TestQAConfig:
+    def test_valid_construction(self):
+        cfg = _make_qa_config()
+        assert cfg.hedging.max_ratio == 0.15
+        assert cfg.hedging.phrases == ["arguably", "perhaps"]
+        assert cfg.source_attribution.require_citation_near_stats is True
+        assert cfg.voice_drift.max_avg_sentence_length == 35
+
+    def test_round_trip(self):
+        cfg = _make_qa_config()
+        json_str = cfg.model_dump_json()
+        restored = QAConfig.model_validate_json(json_str)
+        assert restored == cfg
+
+    def test_nested_hedging_config(self):
+        hc = HedgingConfig(max_ratio=0.2, phrases=["maybe"])
+        assert hc.max_ratio == 0.2
+
+    def test_nested_source_attribution_config(self):
+        sa = SourceAttributionConfig(
+            require_citation_near_stats=False,
+            citation_pattern=r"\[ref:\d+\]",
+        )
+        assert sa.require_citation_near_stats is False
+
+    def test_nested_voice_drift_config(self):
+        vd = VoiceDriftConfig(
+            max_avg_sentence_length=40,
+            min_avg_sentence_length=8,
+            max_sentence_length=70,
+        )
+        assert vd.min_avg_sentence_length == 8
+
+
+# ---------------------------------------------------------------------------
+# Config models — ClusterConfig family
+# ---------------------------------------------------------------------------
+
+
+def _make_cluster_config(**overrides):
+    defaults = {
+        "tfidf": {
+            "max_features": 5000,
+            "ngram_range": [1, 2],
+            "stop_words": "english",
+            "min_df": 2,
+            "extra_stop_words": [],
+        },
+        "clustering": {
+            "method": "agglomerative",
+            "distance_threshold": 0.7,
+            "linkage": "average",
+        },
+        "keywords": {
+            "top_n": 5,
+            "generic_filter": ["AI", "data"],
+        },
+    }
+    defaults.update(overrides)
+    return ClusterConfig(**defaults)
+
+
+class TestClusterConfig:
+    def test_valid_construction(self):
+        cfg = _make_cluster_config()
+        assert cfg.tfidf.max_features == 5000
+        assert cfg.tfidf.ngram_range == [1, 2]
+        assert cfg.clustering.method == "agglomerative"
+        assert cfg.keywords.top_n == 5
+
+    def test_round_trip(self):
+        cfg = _make_cluster_config()
+        json_str = cfg.model_dump_json()
+        restored = ClusterConfig.model_validate_json(json_str)
+        assert restored == cfg
+
+    def test_extra_stop_words_default(self):
+        tfidf = TfidfConfig(
+            max_features=1000,
+            ngram_range=[1, 1],
+            stop_words="english",
+            min_df=1,
+        )
+        assert tfidf.extra_stop_words == []
+
+    def test_generic_filter_default(self):
+        kw = KeywordsConfig(top_n=3)
+        assert kw.generic_filter == []
+
+    def test_clustering_method_config(self):
+        cm = ClusteringMethodConfig(
+            method="agglomerative",
+            distance_threshold=0.5,
+            linkage="ward",
+        )
+        assert cm.linkage == "ward"
+
+
+class TestNgramRangeValidation:
+    def test_rejects_length_one(self):
+        with pytest.raises(ValidationError, match="ngram_range"):
+            TfidfConfig(
+                max_features=5000,
+                ngram_range=[1],
+                stop_words="english",
+                min_df=2,
+            )
+
+    def test_rejects_length_three(self):
+        with pytest.raises(ValidationError, match="ngram_range"):
+            TfidfConfig(
+                max_features=5000,
+                ngram_range=[1, 2, 3],
+                stop_words="english",
+                min_df=2,
+            )
+
+    def test_rejects_min_greater_than_max(self):
+        with pytest.raises(ValidationError, match="ngram_range"):
+            TfidfConfig(
+                max_features=5000,
+                ngram_range=[2, 1],
+                stop_words="english",
+                min_df=2,
+            )
+
+    def test_accepts_equal_min_max(self):
+        tfidf = TfidfConfig(
+            max_features=5000,
+            ngram_range=[1, 1],
+            stop_words="english",
+            min_df=2,
+        )
+        assert tfidf.ngram_range == [1, 1]

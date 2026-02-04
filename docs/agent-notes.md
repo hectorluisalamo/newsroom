@@ -23,6 +23,19 @@
 - `verify.sh` passes: Ruff lint, Ruff format, pytest (53 tests).
 - Known issues: none.
 
+## Phase 2: Settings Loading & Time Anchor (PRD 002)
+
+- Added 11 config Pydantic models to `src/newsroom/models.py`: FeedSource, HedgingConfig, SourceAttributionConfig, VoiceDriftConfig, QAConfig, TfidfConfig, ClusteringMethodConfig, KeywordsConfig, ClusterConfig, VoiceConstitution. Grouped in a clearly marked section above pipeline models.
+- `TfidfConfig.ngram_range` validated: exactly 2 elements, min <= max.
+- Implemented `resolve_now` in `src/newsroom/time_anchor.py`: cli_now > NEWSROOM_NOW env > datetime.now(UTC). Normalizes `Z` suffix to `+00:00` for `fromisoformat` compatibility. Naive strings treated as UTC; aware strings converted to UTC.
+- Implemented 4 config loaders in `src/newsroom/settings.py`: `load_sources`, `load_qa_config`, `load_cluster_config`, `load_voice`, plus `ConfigError` exception.
+- `load_voice` uses deterministic markdown parsing: exact H2 header matching, hyphen-space bullets only, non-bullet content ignored.
+- All loaders fail fast with `ConfigError` including file paths in messages.
+- 63 new tests across 3 files: `test_models.py` (14 new), `test_settings.py` (30), `test_time_anchor.py` (12). Golden-path tests use `config.example/`; error-path tests use `tmp_path`.
+- `verify.sh` passes: Ruff lint, Ruff format, pytest (116 tests).
+- CLI wiring of `resolve_now` deferred to a later PRD.
+- Known issues: none.
+
 ### Next Steps
 
-- **PRD 002: Settings Loading & Time Anchor** — Implement `settings.py` (YAML + Markdown config loaders) and `time_anchor.py` (`--now` / `NEWSROOM_NOW` resolution). Completes the typed data foundation for subsequent pipeline phases.
+- **PRD 003**: RSS Ingestion + Normalization — Implement `ingestion/rss.py` and `normalize/normalize.py`. Depends on settings loaders and time anchor from PRD 002.
