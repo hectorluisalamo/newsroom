@@ -79,7 +79,7 @@ Explicitly list what is NOT being done.
 - No unrelated changes
 - Documentation updated if behavior changed
 - `docs/agent-notes.md` updated with PRD completion note
-- Singe commit message drafted referencing PRD
+- Single commit message drafted referencing PRD
 ```
 
 Claude MUST:
