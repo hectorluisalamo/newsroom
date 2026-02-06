@@ -141,8 +141,8 @@ Stack and boundary rules that apply to all implementation work:
 All work follows a PRD-driven, verification-gated process:
 
 - All non-trivial work begins with a PRD in `docs/prd/`.
-- The Blueprint (`docs/BLUEPRINT.md`) is binding unless explicitly
-  revised via `docs/decisions.md` (ADR-style).
+- `docs/architecture.md` is the binding system design authority;
+  changes require an ADR in `docs/decisions.md`.
 - `scripts/verify.sh` (lint + format check + tests) MUST pass before
   any task is considered complete.
 - CodeRabbit review gate is required before task completion; material
@@ -154,15 +154,16 @@ All work follows a PRD-driven, verification-gated process:
 ## Governance
 
 This constitution captures the distilled, non-negotiable principles of
-the Newsroom project. It is the speckit-level expression of rules that
-originate in the Blueprint, architecture docs, and development playbook.
+the Newsroom project. It is the supreme governing document for project
+decisions, conventions, and quality standards.
 
 **Authority hierarchy** (in case of conflict):
 1. CI / verification output (`scripts/verify.sh`, QA gates)
-2. `docs/BLUEPRINT.md`
-3. `AGENTIC_DEV_PLAYBOOK.md`
-4. This constitution
-5. `CLAUDE.md`
+2. This constitution (`.specify/memory/constitution.md`)
+3. `docs/architecture.md` (system design authority)
+4. `docs/decisions.md` (ADR-style design decisions)
+5. `CLAUDE.md` (operational rules and conventions)
+6. `docs/prd/*.md` (feature specifications)
 
 **Amendment procedure**:
 - Amendments require a pull request with rationale.
@@ -177,4 +178,4 @@ originate in the Blueprint, architecture docs, and development playbook.
 - Violations MUST be justified in the plan's Complexity Tracking table
   or resolved before proceeding.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-04 | **Last Amended**: 2026-02-04
+**Version**: 1.1.0 | **Ratified**: 2026-02-04 | **Last Amended**: 2026-02-05

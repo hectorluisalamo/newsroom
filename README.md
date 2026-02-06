@@ -1,6 +1,10 @@
 # Newsroom
 
-A Python CLI that produces Substack-ready opinion columns from beat-specific research briefs and writer voices. V0 covers the `science_tech` beat end-to-end.
+A Python CLI that produces Substack-ready opinion columns from beat-specific research briefs and writer voices.
+
+## Operating Model
+
+Newsroom operates in two distinct steps. First, the **pitch** step runs deterministically without LLM calls: it ingests RSS sources, clusters articles by theme, ranks them by relevance and timeliness, and generates three one-paragraph pitches. Second, the **draft** step is LLM-powered and human-guided: it takes a selected pitch plus editorial guidance, produces a ~700-word opinion column in the configured writer's voice, and runs QA checks for word count, structure, and tone. The human editor controls which pitch to develop, provides editorial direction, and decides whether to publish.
 
 ## Quick Start
 
@@ -34,16 +38,6 @@ NEWSROOM_MODEL=        # LLM model ID (default: claude-sonnet-4-20250514)
 NEWSROOM_NOW=          # Optional: fixed ISO 8601 timestamp for deterministic runs
 ```
 
-## Development
-
-```bash
-# Run linter, formatter check, and tests
-bash scripts/verify.sh
-
-# Run tests only
-uv run pytest tests/ -v
-```
-
 ## Project Structure
 
 ```
@@ -59,3 +53,19 @@ tests/              Unit, integration, and e2e tests
 ## Stack
 
 Python 3.12+, uv, Ruff, pytest, Pydantic, feedparser, httpx, rich, anthropic SDK, scikit-learn.
+
+## Development
+
+```bash
+# Run linter, formatter check, and tests
+bash scripts/verify.sh
+
+# Run tests only
+uv run pytest tests/ -v
+```
+
+## Documentation
+
+- `docs/architecture.md` — system design and module overview
+- `docs/decisions.md` — recorded design decisions (ADR-style)
+- `.specify/memory/constitution.md` — project principles and governance

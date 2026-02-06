@@ -158,6 +158,45 @@ All Python code lives under `src/newsroom/`.
 
 ---
 
+## Data Model Overview
+
+All data models are defined as Pydantic models in `src/newsroom/models.py` (declarative only, no business logic). The code is the source of truth for field-level definitions; this section describes each model's purpose and key constraints.
+
+- **FeedItem** — A single normalized article from an RSS feed. Identified by SHA256 of its canonical URL. Enforces UTC-aware timestamps and summary truncation after HTML stripping.
+
+- **BriefCluster** — A group of related feed items representing a story thread. Cluster ID is a deterministic SHA256 of sorted item IDs. Carries TF-IDF centroid keywords, recency score, source diversity count, and cluster size.
+
+- **BriefPack** — The complete research brief for a beat on a given date. Contains all clusters, ingestion/dedupe counts, and a UTC-aware generation timestamp.
+
+- **Pitch** — A single pitch candidate derived from a brief pack. Requires a minimum of 3 source URLs (max 10). Carries a thesis angle, key points, risk flags, and the angle template used. Deterministic pitch ID: `{beat}-{date}-{index}`.
+
+- **PitchSet** — The set of exactly 3 pitches produced for a beat on a date. References the brief pack it was generated from.
+
+- **Draft** — A generated opinion column. Contains the markdown body with `[src:N]` inline citation markers, word count, numbered source URLs, editorial guidance used, model ID, and optional token usage.
+
+- **QAFinding** — A single QA check result. Carries check name, severity (error/warning/info), location, and message.
+
+- **QAReport** — Quality gate results for a draft. Aggregates all findings. Passes only if no error-severity findings exist.
+
+---
+
+## Resolved Design Decisions
+
+Key design decisions recorded during project bootstrap. See `docs/decisions.md` for full ADR records.
+
+1. **argparse over Click** — two commands, lean deps; parsing centralized in `cli.py`.
+2. **scikit-learn as required dependency** — TF-IDF clustering is core; behind a `Clusterer` protocol.
+3. **Pitch generation is purely algorithmic** — no LLM; angle templates force differentiation.
+4. **Single `models.py`** — purely declarative, no business logic; revisit if >300-400 LOC.
+5. **httpx over requests** — sync-only in V0; explicit timeouts and retries.
+6. **Deterministic time control** — `--now` flag and `NEWSROOM_NOW` env var override current time.
+7. **UTC-aware datetimes everywhere** — all timestamps normalized to UTC on ingest.
+8. **Inline citation markers** — drafts use `[src:N]` convention; QA matches stats to markers.
+9. **LLM model from config/env** — `NEWSROOM_MODEL` env var, never hardcoded.
+10. **python-dotenv for local dev** — `.env` loaded on CLI startup.
+
+---
+
 ## CLI Surface
 
 ### `pitch`
@@ -269,6 +308,30 @@ The system is designed to scale by adding beats, not complexity:
   - optional beat-specific heuristics (later)
 
 Social ingestion, richer credibility analysis, and memory/RAG layers are future phases that plug into the existing brief pack and pitch/draft boundary.
+
+---
+
+## Dependencies
+
+`pyproject.toml` is the source of truth for version pins.
+
+### Runtime
+
+- **httpx** — sync HTTP client for RSS fetching (explicit timeouts + retries)
+- **feedparser** — RSS/Atom feed parsing
+- **pyyaml** — YAML config file loading
+- **pydantic** — declarative data models and validation
+- **rich** — CLI output formatting
+- **anthropic** — Anthropic API client (draft step only)
+- **scikit-learn** — TF-IDF vectorization and agglomerative clustering
+- **numpy** — numerical operations (pinned alongside scikit-learn)
+- **python-dotenv** — `.env` file loading for local development
+
+### Dev
+
+- **pytest** — test framework
+- **ruff** — linter and formatter
+- **pytest-mock** — test mocking utilities
 
 ---
 
