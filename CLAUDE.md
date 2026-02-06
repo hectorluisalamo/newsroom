@@ -1,18 +1,13 @@
 STATUS: PUBLIC REPOSITORY — portfolio-safe, auditable, publishable code only.
 
-## Governing Documents (Authoritative Order)
+## Authority Hierarchy (In Case of Conflict)
 
-1. docs/BLUEPRINT.md — system blueprint and operating model
-2. docs/architecture.md — structural and module-level design
-3. docs/decisions.md — recorded design decisions (ADR-style)
-4. docs/prd/*.md — scoped work specifications
-
-Claude MUST:
-- Assume all code, documentation, and commit history in this repository are public-facing and externally visible.
-- Read docs/BLUEPRINT.md before starting any PRD or implementation
-- Treat the Blueprint as binding unless explicitly revised
-- Propose changes to the Blueprint only via docs/decisions.md or an approved PRD
-- Never bypass or reinterpret Blueprint constraints
+1. CI / verification output (`scripts/verify.sh`, QA gates)
+2. `.specify/memory/constitution.md` (supreme constitutional authority)
+3. `docs/architecture.md` (system design authority)
+4. `docs/decisions.md` (ADR-style design decisions)
+5. `CLAUDE.md` (operational rules and conventions)
+6. `docs/prd/*.md` (feature specifications)
 
 ---
 
@@ -42,7 +37,7 @@ Every new Python file must begin with a two-line comment, each line prefixed wit
 
 - **Never commit `config/` or `.env`.** The entire `config/` directory is gitignored.
 - **Only commit `config.example/`.** Example configs are the public repo's reference configs.
-- Runtime config is generated locally via `scripts/init_config.sh` or overlayed from the private repo via `scripts/sync_private_config.sh`.
+- Runtime config is generated locally via `scripts/init_config.sh` or overlaid from the private repo via `scripts/sync_private_config.sh`.
 
 ## Verification
 

@@ -117,3 +117,15 @@
 **Decision:** `.env` file is loaded explicitly on CLI startup via python-dotenv so users do not need to manually export vars.
 
 **Consequences:** Seamless local dev experience. `.env` is gitignored; `.env.example` documents expected vars.
+
+---
+
+## ADR-011: Documentation reorganization and authority hierarchy
+
+**Status:** Resolved
+
+**Context:** `docs/BLUEPRINT.md` (650 lines) duplicated content already covered by `docs/architecture.md`, `docs/decisions.md`, and `README.md`. The repo-local `docs/AGENTIC_DEV_PLAYBOOK.md` duplicated the global playbook in `~/.claude/`. The authority hierarchy in `constitution.md` referenced both deprecated files and placed the constitution below them, inconsistent with its role as the supreme governing document.
+
+**Decision:** Consolidate documentation into four files with distinct responsibilities: `README.md` (concise project overview), `CLAUDE.md` (operational rules only), `docs/architecture.md` (system design authority, absorbing summary-level BLUEPRINT content), and `.specify/memory/constitution.md` (supreme law). Remove `docs/BLUEPRINT.md` and `docs/AGENTIC_DEV_PLAYBOOK.md`. Establish a clear authority hierarchy: CI output > constitution > architecture > decisions > CLAUDE.md > PRDs.
+
+**Consequences:** Two deprecated files removed. Constitution promoted to #2 authority (below CI only). Architecture.md is the binding system design authority. No content duplication between README, CLAUDE.md, and architecture.md. Each documentation file has a single, clear responsibility.
