@@ -1,6 +1,6 @@
 # PRD: Project Bootstrap — Newsroom CLI
 
-> **Historical note:** References to `newsroom-config`, `sync_private_config.sh`, and BLUEPRINT.md in this PRD are historical. The private config repo and speckit governance were removed per ADR-012.
+> **Historical note:** References to `newsroom-config`, `sync_private_config.sh`, BLUEPRINT.md, and AGENTIC_DEV_PLAYBOOK.md in this PRD are historical. The private config repo and speckit governance were removed per ADR-012.
 
 **PRD ID**: `000-bootstrap`
 **Phase**: 0

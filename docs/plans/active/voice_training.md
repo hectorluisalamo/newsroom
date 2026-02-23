@@ -86,9 +86,9 @@ class VoiceProfile(BaseModel):
     sentence_stats: SentenceStats
     vocabulary: VocabularyStats
     rhetorical: RhetoricalStats
-    top_unigrams: list[tuple[str, float]]   # raw frequency, not TF-IDF
-    top_bigrams: list[tuple[str, float]]
-    top_trigrams: list[tuple[str, float]]
+    top_unigrams: list[tuple[str, int]]   # raw count from CountVectorizer, not TF-IDF
+    top_bigrams: list[tuple[str, int]]
+    top_trigrams: list[tuple[str, int]]
     generated_at: datetime
 ```
 
@@ -143,7 +143,7 @@ Add `strip_markdown(text: str) -> str` to `analyze.py` (or `utils/text.py` if it
 
 **CLI:**
 ```
-newsroom train --beat science_tech [--config-dir config/] [--min-samples 5] [--verbose]
+newsroom train --beat science_tech [--config-dir config/] [--min-samples 5] [--now ISO8601] [--verbose]
 ```
 Output: `config/voices/science_tech_profile.json`
 

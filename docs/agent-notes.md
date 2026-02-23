@@ -14,7 +14,7 @@
 - Migrated from speckit/constitution governance to conversation-driven workflow (ADR-012)
 
 ## Immediate Next Step
-- **PRD 003: RSS Ingestion & Normalization** — Implement ingestion/rss.py and normalize/normalize.py. Depends on settings loaders and time anchor from PRD 002. See docs/architecture.md for module responsibilities.
+- **Phase 3: RSS Ingestion & Normalization** — Define requirements through conversation, then implement ingestion/rss.py and normalize/normalize.py. Depends on settings loaders and time anchor from Phase 2. See docs/architecture.md for module responsibilities.
 
 ## Known Issues
 - None
