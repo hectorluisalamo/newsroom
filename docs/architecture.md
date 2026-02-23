@@ -2,7 +2,7 @@
 
 This document describes the architecture of **Newsroom**: a lean, deterministic CLI that generates **algorithmic pitches** and **LLM-authored opinion drafts** for a single beat (V0: `science_tech`), with a human editor in control.
 
-This repo is **public** and implements the core pipeline. Runtime configuration (sources, QA thresholds, voice constitutions) is **open-core**: example configs live in `config.example/`, while real configs are provided locally or via a private overlay.
+This repo is **public** and implements the core pipeline. Runtime configuration (sources, QA thresholds, voice constitutions) is **open-core**: example configs live in `config.example/`, while real configs are generated locally via `scripts/init_config.sh`.
 
 ---
 
@@ -57,14 +57,13 @@ This keeps discovery fast and reliable, while preserving human authority over me
 
 - `config/` is **gitignored** in the public repo.
 - `config.example/` is committed and serves as canonical examples.
-- Runtime config is generated locally (e.g., `scripts/init_config.sh`) or overlaid from a private repo (e.g., `scripts/sync_private_config.sh`).
+- Runtime config is generated locally via `scripts/init_config.sh`.
 
 ### Why
-This keeps the public repo publishable while allowing:
-- proprietary source lists
+This keeps the public repo clean while allowing:
 - evolving voice constitutions
 - environment-specific thresholds
-without leaking private strategy or secrets.
+- API keys and secrets in `.env` (gitignored separately)
 
 ---
 

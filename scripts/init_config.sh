@@ -13,4 +13,4 @@ cp config.example/cluster.yaml config/cluster.yaml
 cp config.example/voices/science_tech.md config/voices/science_tech.md
 
 echo "Initialized config/ from config.example/"
-echo "For production config, use scripts/sync_private_config.sh"
+echo "Edit config/ files to customize for your environment."

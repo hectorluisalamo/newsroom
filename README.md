@@ -26,7 +26,6 @@ This repository is **open-core**. Production configuration is intentionally excl
 - **Example configs** live in `config.example/` and are committed to the repo.
 - **Runtime configs** live in `config/` and are gitignored.
 - Run `scripts/init_config.sh` to generate local config from examples for demo runs.
-- If you have the private config repo, overlay with `scripts/sync_private_config.sh`.
 
 ### Environment Variables
 
@@ -68,4 +67,3 @@ uv run pytest tests/ -v
 
 - `docs/architecture.md` — system design and module overview
 - `docs/decisions.md` — recorded design decisions (ADR-style)
-- `.specify/memory/constitution.md` — project principles and governance

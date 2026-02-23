@@ -3,11 +3,10 @@ STATUS: PUBLIC REPOSITORY — portfolio-safe, auditable, publishable code only.
 ## Authority Hierarchy (In Case of Conflict)
 
 1. CI / verification output (`scripts/verify.sh`, QA gates)
-2. `.specify/memory/constitution.md` (supreme constitutional authority)
+2. `CLAUDE.md` (repo-local operational rules and conventions)
 3. `docs/architecture.md` (system design authority)
 4. `docs/decisions.md` (ADR-style design decisions)
-5. `CLAUDE.md` (operational rules and conventions)
-6. `docs/prd/*.md` (feature specifications)
+5. `docs/prd/*.md` (feature specifications)
 
 ---
 
@@ -37,7 +36,7 @@ Every new Python file must begin with a two-line comment, each line prefixed wit
 
 - **Never commit `config/` or `.env`.** The entire `config/` directory is gitignored.
 - **Only commit `config.example/`.** Example configs are the public repo's reference configs.
-- Runtime config is generated locally via `scripts/init_config.sh` or overlaid from the private repo via `scripts/sync_private_config.sh`.
+- Runtime config is generated locally via `scripts/init_config.sh`.
 
 ## Verification
 
