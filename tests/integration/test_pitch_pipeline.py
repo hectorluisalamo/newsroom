@@ -45,11 +45,12 @@ class TestPitchPipeline:
 
         assert brief["beat"] == "science_tech"
         assert brief["date"] == "2026-01-15"
-        assert brief["total_items_ingested"] > 0
+        # Pinned to the fixture feeds' exact contents so ingestion/dedupe/
+        # clustering drift gets caught instead of silently passing a `> 0`.
+        assert brief["total_items_ingested"] == 12
         # No fuzzy/exact dupes across the fixture feeds, so dedupe preserves count.
-        assert brief["total_items_after_dedupe"] > 0
-        assert brief["total_items_after_dedupe"] <= brief["total_items_ingested"]
-        assert len(brief["clusters"]) >= 3
+        assert brief["total_items_after_dedupe"] == 12
+        assert len(brief["clusters"]) == 4
 
         for cluster in brief["clusters"]:
             assert cluster["size"] == len(cluster["items"])

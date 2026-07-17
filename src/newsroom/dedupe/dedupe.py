@@ -16,8 +16,6 @@ def _title_words(title: str) -> set[str]:
 
 
 def _jaccard(a: set[str], b: set[str]) -> float:
-    if not a and not b:
-        return 1.0
     union = a | b
     if not union:
         return 0.0

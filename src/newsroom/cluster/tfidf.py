@@ -84,10 +84,19 @@ class TfidfClusterer:
             ]
 
         texts = [f"{item.title} {item.summary}" for item in items]
-        matrix = self._vectorizer.fit_transform(texts)
-        feature_names = self._vectorizer.get_feature_names_out()
+        try:
+            matrix = self._vectorizer.fit_transform(texts)
+            feature_names = self._vectorizer.get_feature_names_out()
+            empty_vocabulary = matrix.shape[1] == 0
+        except ValueError:
+            # sklearn raises rather than returning a zero-column matrix when
+            # every term is pruned (e.g. min_df filters out an all-unique,
+            # tiny/disjoint corpus). Treat it the same as an empty vocabulary.
+            matrix = None
+            feature_names = []
+            empty_vocabulary = True
 
-        if matrix.shape[1] == 0:
+        if empty_vocabulary:
             labels = list(range(len(items)))
         else:
             clustering = AgglomerativeClustering(
@@ -102,7 +111,7 @@ class TfidfClusterer:
         for row_idx, label in enumerate(labels):
             groups[label].append(row_idx)
 
-        dense = matrix.toarray() if matrix.shape[1] else None
+        dense = matrix.toarray() if (matrix is not None and matrix.shape[1]) else None
 
         clusters: list[BriefCluster] = []
         for row_indices in groups.values():
