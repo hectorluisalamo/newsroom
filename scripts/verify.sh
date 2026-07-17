@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ruff check src/ tests/
-ruff format --check src/ tests/
-pytest tests/ -v
+uv run ruff check src/ tests/
+uv run ruff format --check src/ tests/
+uv run pytest tests/ -v

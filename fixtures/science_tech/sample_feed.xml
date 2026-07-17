@@ -1,8 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Sample Feed</title>
-    <link>https://example.com</link>
+    <title>Tech Wire Daily</title>
+    <link>https://example.com/tech-wire-daily</link>
     <description>A sample RSS feed for testing.</description>
+    <item>
+      <title>Commerce Department Tightens AI Chip Export Rules to China</title>
+      <link>https://example.com/tech-wire-daily/ai-chip-export-rules</link>
+      <description>The U.S. Commerce Department announced new export controls restricting advanced AI chip exports to China, citing national security concerns over artificial intelligence chip technology.</description>
+      <pubDate>Wed, 14 Jan 2026 09:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/ai-chip-export-rules</guid>
+    </item>
+    <item>
+      <title>Chipmakers Brace for New AI Export Restrictions</title>
+      <link>https://example.com/tech-wire-daily/chipmakers-brace-restrictions</link>
+      <description>Semiconductor companies are adjusting supply chains after the Commerce Department's latest AI chip export restrictions targeting China took effect this week.</description>
+      <pubDate>Wed, 14 Jan 2026 15:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/chipmakers-brace-restrictions</guid>
+    </item>
+    <item>
+      <title>Startup Claims Breakthrough in Error-Corrected Quantum Computing</title>
+      <link>https://example.com/tech-wire-daily/quantum-error-correction-breakthrough</link>
+      <description>A quantum computing startup announced it achieved a new milestone in error-corrected qubits, a step toward practical quantum computing hardware.</description>
+      <pubDate>Tue, 13 Jan 2026 14:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/quantum-error-correction-breakthrough</guid>
+    </item>
+    <item>
+      <title>Private Rocket Company Launches New Satellite Constellation</title>
+      <link>https://example.com/tech-wire-daily/satellite-constellation-launch</link>
+      <description>A private orbital launch company successfully deployed the first batch of its new satellite constellation, expanding broadband coverage.</description>
+      <pubDate>Tue, 13 Jan 2026 18:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/satellite-constellation-launch</guid>
+    </item>
+    <item>
+      <title>Satellite Constellation Launch Raises Orbital Debris Concerns</title>
+      <link>https://example.com/tech-wire-daily/orbital-debris-concerns</link>
+      <description>Astronomers warn the latest satellite constellation launch from the private orbital launch company could worsen orbital debris and light pollution.</description>
+      <pubDate>Wed, 14 Jan 2026 07:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/orbital-debris-concerns</guid>
+    </item>
+    <item>
+      <title>Patients Await Access After Gene-Editing Therapy Trial Success</title>
+      <link>https://example.com/tech-wire-daily/gene-editing-trial-access</link>
+      <description>Patient advocacy groups are pushing for expanded access following the gene-editing therapy trial's encouraging results this month.</description>
+      <pubDate>Thu, 15 Jan 2026 06:00:00 GMT</pubDate>
+      <guid>https://example.com/tech-wire-daily/gene-editing-trial-access</guid>
+    </item>
   </channel>
 </rss>
