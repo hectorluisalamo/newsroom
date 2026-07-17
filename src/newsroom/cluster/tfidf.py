@@ -5,6 +5,7 @@
 import hashlib
 from collections import defaultdict
 
+import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS, TfidfVectorizer
 
@@ -14,6 +15,22 @@ from newsroom.models import BriefCluster, ClusterConfig, FeedItem
 def _cluster_id(items: list[FeedItem]) -> str:
     joined = "".join(sorted(item.item_id for item in items))
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
+
+
+def _agglomerative_labels(dense_rows, clustering_config) -> list[int]:
+    """Run cosine agglomerative clustering over rows with nonzero norm.
+
+    Callers must never pass an all-zero row here: cosine distance is
+    undefined (0/0) for a zero vector, and sklearn raises rather than
+    returning a usable distance for it.
+    """
+    clustering = AgglomerativeClustering(
+        n_clusters=None,
+        distance_threshold=clustering_config.distance_threshold,
+        linkage=clustering_config.linkage,
+        metric="cosine",
+    )
+    return list(clustering.fit_predict(dense_rows))
 
 
 def _recency_score(items: list[FeedItem], oldest, newest) -> float:
@@ -98,20 +115,42 @@ class TfidfClusterer:
 
         if empty_vocabulary:
             labels = list(range(len(items)))
+            dense = None
         else:
-            clustering = AgglomerativeClustering(
-                n_clusters=None,
-                distance_threshold=self._clustering_config.distance_threshold,
-                linkage=self._clustering_config.linkage,
-                metric="cosine",
-            )
-            labels = clustering.fit_predict(matrix.toarray())
+            dense = matrix.toarray()
+            norms = np.linalg.norm(dense, axis=1)
+            zero_indices = [idx for idx, norm in enumerate(norms) if norm == 0]
+            nonzero_indices = [idx for idx, norm in enumerate(norms) if norm != 0]
+
+            if not zero_indices:
+                labels = _agglomerative_labels(dense, self._clustering_config)
+            elif len(nonzero_indices) >= 2:
+                # A row can be all-zero when min_df prunes every term unique
+                # to that item while other items retain shared terms (the
+                # overall vocabulary is non-empty, so fit_transform doesn't
+                # raise). Cosine distance is undefined for that row, so it
+                # can't go into AgglomerativeClustering with the rest.
+                # Cluster the nonzero rows normally, then give each zero row
+                # its own singleton cluster with a label that can't collide.
+                sub_labels = _agglomerative_labels(
+                    dense[nonzero_indices], self._clustering_config
+                )
+                next_label = max(sub_labels) + 1
+                labels = [0] * len(items)
+                for sub_idx, row_idx in enumerate(nonzero_indices):
+                    labels[row_idx] = sub_labels[sub_idx]
+                for row_idx in zero_indices:
+                    labels[row_idx] = next_label
+                    next_label += 1
+            else:
+                # Fewer than two rows retain any TF-IDF weight, so there's
+                # nothing left for agglomerative clustering to compare.
+                # Fall back to a singleton per item, same as empty vocabulary.
+                labels = list(range(len(items)))
 
         groups: dict[int, list[int]] = defaultdict(list)
         for row_idx, label in enumerate(labels):
             groups[label].append(row_idx)
-
-        dense = matrix.toarray() if (matrix is not None and matrix.shape[1]) else None
 
         clusters: list[BriefCluster] = []
         for row_indices in groups.values():
