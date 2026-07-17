@@ -23,6 +23,16 @@ def _dedupe_preserve_order(urls: list[str]) -> list[str]:
     return seen
 
 
+def _distinct_source_url_count(cluster: BriefCluster) -> int:
+    return len(_dedupe_preserve_order([str(item.url) for item in cluster.items]))
+
+
+def _cluster_qualifies(cluster: BriefCluster) -> bool:
+    """A cluster can only back a Pitch if it has >=3 distinct source URLs
+    (Pitch.source_urls enforces that minimum)."""
+    return _distinct_source_url_count(cluster) >= 3
+
+
 def _pitch_from_cluster(
     cluster: BriefCluster,
     angle_name: str,
@@ -53,7 +63,9 @@ def generate_pitches(brief: BriefPack, n: int = 3) -> PitchSet:
     """Generate n pitch candidates from a BriefPack.
 
     Strategy varies by cluster count (clusters are assumed pre-ranked,
-    highest-priority first):
+    highest-priority first). Clusters with fewer than 3 distinct source URLs
+    cannot back a valid Pitch, so they are skipped before the strategy below
+    is applied:
     - >=3 clusters: one pitch per top-3 cluster
     - 2 clusters: one pitch each + second angle on top cluster
     - 1 cluster: three different angle templates
@@ -65,9 +77,13 @@ def generate_pitches(brief: BriefPack, n: int = 3) -> PitchSet:
         )
         raise ValueError(msg)
 
-    clusters = brief.clusters
-    if not clusters:
+    if not brief.clusters:
         msg = "Cannot generate pitches from a brief pack with zero clusters"
+        raise ValueError(msg)
+
+    clusters = [c for c in brief.clusters if _cluster_qualifies(c)]
+    if not clusters:
+        msg = "Cannot generate pitches: no cluster has at least 3 distinct source URLs"
         raise ValueError(msg)
 
     date_str = brief.date.isoformat()
