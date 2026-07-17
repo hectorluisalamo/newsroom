@@ -2,8 +2,12 @@
 # ABOUTME: Produces exactly 3 differentiated pitch candidates per brief.
 """Pitch generation for the Newsroom pipeline."""
 
+import logging
+
 from newsroom.models import BriefCluster, BriefPack, Pitch, PitchSet
 from newsroom.pitches.angles import ANGLES
+
+logger = logging.getLogger(__name__)
 
 _ANGLE_ORDER = [
     "trend_analysis",
@@ -82,6 +86,11 @@ def generate_pitches(brief: BriefPack, n: int = 3) -> PitchSet:
         raise ValueError(msg)
 
     clusters = [c for c in brief.clusters if _cluster_qualifies(c)]
+    skipped = len(brief.clusters) - len(clusters)
+    if skipped:
+        logger.info(
+            "Skipped %d cluster(s) with fewer than 3 distinct source URLs", skipped
+        )
     if not clusters:
         msg = "Cannot generate pitches: no cluster has at least 3 distinct source URLs"
         raise ValueError(msg)

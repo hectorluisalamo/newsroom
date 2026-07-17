@@ -5,6 +5,7 @@
 from datetime import date, datetime, timezone
 
 import pytest
+from pydantic import ValidationError
 
 from newsroom.models import BriefCluster, BriefPack, FeedItem
 from newsroom.pitches.pitches import generate_pitches
@@ -163,8 +164,14 @@ class TestThinClusterHandling:
         )
         brief = _make_brief_pack([thin_only])
 
-        with pytest.raises(ValueError, match="source"):
+        with pytest.raises(
+            ValueError, match="at least 3 distinct source URLs"
+        ) as exc_info:
             generate_pitches(brief, n=3)
+        # The domain error must not be a leaked pydantic ValidationError
+        # (which also subclasses ValueError), so this test would fail against
+        # the pre-fix code that let the model's validation error propagate.
+        assert not isinstance(exc_info.value, ValidationError)
 
     def test_thin_cluster_among_two_falls_back_to_healthy_only(self):
         """With one thin and one healthy cluster (2 total), the fallback
