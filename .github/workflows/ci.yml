@@ -1,0 +1,31 @@
+name: CI
+
+# Runs the repo's canonical local check (scripts/verify.sh: ruff lint + ruff
+# format --check + pytest) on every PR and every push to main via uv.
+# Pin: astral-sh/setup-uv SHA-pinned at v8.3.2 — it manages Python itself via
+# the `python-version` input (sets UV_PYTHON; no separate actions/setup-python
+# needed) and handles dependency caching.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0   # v7.0.0
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990   # v8.3.2
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen
+      # scripts/verify.sh invokes `ruff`/`pytest` directly (no `uv run` prefix),
+      # so run it under `uv run` here rather than activating the venv globally
+      # (Astral recommends against `activate-environment` — it shadows the uv
+      # binary itself for any dependency that also ships a `uv` executable).
+      - run: uv run bash scripts/verify.sh
