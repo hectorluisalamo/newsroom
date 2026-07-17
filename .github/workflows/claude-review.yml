@@ -1,0 +1,50 @@
+name: Claude PR Review
+
+# Quality / correctness review on every PR, via Anthropic's first-party action.
+# Auth: CLAUDE_CODE_OAUTH_TOKEN (repo secret, from `claude setup-token`) — runs free
+# under the Claude Max subscription. Uses `pull_request` (NOT pull_request_target) so
+# it runs in the fork's restricted context — never the base-repo context with secrets.
+# Pin: claude-code-action SHA-pinned at v1.0.99 (>= v1.0.94, CVSS-9.4 fix). The
+# job-level setup-bun step puts bun on PATH before claude-code-action runs, working
+# around the action's internal setup-bun failing open on a transient GitHub API 503.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5   # v4.3.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3   # v2.1.2
+        with:
+          bun-version: 1.3.6
+      - uses: anthropics/claude-code-action@c3d45e8e941e1b2ad7b278c57482d9c5bf1f35b3   # v1.0.99 (>= v1.0.94 CVSS-9.4 fix)
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Please review this pull request with a focus on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Security implications
+            - Performance considerations
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
+            Only post GitHub comments — don't submit review text as messages.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
