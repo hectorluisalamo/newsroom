@@ -24,4 +24,8 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen
-      - run: bash scripts/verify.sh
+      # scripts/verify.sh invokes `ruff`/`pytest` directly (no `uv run` prefix),
+      # so run it under `uv run` here rather than activating the venv globally
+      # (Astral recommends against `activate-environment` — it shadows the uv
+      # binary itself for any dependency that also ships a `uv` executable).
+      - run: uv run bash scripts/verify.sh
