@@ -107,3 +107,31 @@ class TestPitchPipeline:
                 verbose=False,
                 config_dir=_CONFIG_EXAMPLE,
             )
+
+
+class TestBeatPathValidation:
+    """A malicious --beat value must never let output escape out_dir."""
+
+    @pytest.mark.parametrize(
+        "malicious_beat",
+        [
+            "../../etc/newsroom",
+            "..",
+            "/abs/path",
+            "sub/dir",
+            "",
+        ],
+    )
+    def test_malicious_beat_raises_and_writes_nothing(self, tmp_path, malicious_beat):
+        with pytest.raises(ValueError):
+            commands.pitch_cmd(
+                beat=malicious_beat,
+                since="48h",
+                now=_FIXED_NOW,
+                out_dir=tmp_path,
+                source_override=str(_FIXTURE_DIR),
+                verbose=False,
+                config_dir=_CONFIG_EXAMPLE,
+            )
+        # Nothing should be written anywhere, inside or outside out_dir.
+        assert list(tmp_path.rglob("*")) == []

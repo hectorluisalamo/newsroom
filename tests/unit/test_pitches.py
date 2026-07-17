@@ -97,6 +97,10 @@ class TestThinClusterHandling:
             ],
         )
         brief = _make_brief_pack([thin_top, healthy_1, healthy_2, healthy_3])
+        # generate_pitches treats brief.clusters as pre-ranked, highest-priority
+        # first, so the thin cluster must actually be first for this test to
+        # exercise the "top-ranked thin cluster" path it claims to cover.
+        assert brief.clusters[0].cluster_id == "thin-top"
 
         pitch_set = generate_pitches(brief, n=3)
 

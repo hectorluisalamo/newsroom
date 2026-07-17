@@ -25,6 +25,25 @@ from newsroom.time_anchor import resolve_now
 logger = logging.getLogger(__name__)
 
 
+def _validate_beat(beat: str) -> None:
+    """Reject a `beat` value that could escape `out_dir` once joined into a path.
+
+    `beat` comes from the caller-controlled `--beat` CLI flag and is joined
+    directly into the output path (`out_dir / date / beat`), so it must be a
+    single safe path component: not empty, not `.` or `..`, no path
+    separators, and not an absolute path.
+    """
+    if not beat or beat in (".", ".."):
+        msg = f"beat must be a non-empty path component, got {beat!r}"
+        raise ValueError(msg)
+    if "/" in beat or "\\" in beat:
+        msg = f"beat must not contain path separators, got {beat!r}"
+        raise ValueError(msg)
+    if Path(beat).is_absolute():
+        msg = f"beat must not be an absolute path, got {beat!r}"
+        raise ValueError(msg)
+
+
 def pitch_cmd(
     beat: str,
     since: str,
@@ -41,6 +60,7 @@ def pitch_cmd(
     explicit `config_dir` (e.g. `config.example/`) so they never depend
     on that gitignored, developer-local state.
     """
+    _validate_beat(beat)
     setup_logging(verbose)
     resolved_now = resolve_now(now)
     resolved_config_dir = config_dir if config_dir is not None else Path("config")
@@ -53,11 +73,11 @@ def pitch_cmd(
 
     entries = [entry for entry, _ in pairs]
     entry_sources = [source for _, source in pairs]
+    total_ingested = len(entries)
 
     items = normalize_all(
         entries, entry_sources, beat=beat, since=since, now=resolved_now
     )
-    total_ingested = len(items)
 
     deduped = dedupe_items(items)
     total_after_dedupe = len(deduped)
