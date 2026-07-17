@@ -247,3 +247,40 @@ test files with real coverage of each pipeline module's edge cases (see §2).
    singleton cluster rather than crashing. Not exercised by the current
    fixtures (which were sized to avoid it) — worth a dedicated unit test in
    Night 2.
+
+## 4. Night 1 — follow-up fixes (after the initial pipeline commit)
+
+The initial pipeline landed at `930d449`; three follow-up commits then hardened
+it (all local, unpushed, on `feat/wire-pitch-pipeline`), driven by a
+fresh-context adversarial review + the CodeRabbit CLI:
+
+1. `1cc33cd` **fix: thin-cluster crash** — `generate_pitches` raised an
+   unhandled pydantic `ValidationError` when a top-ranked cluster had fewer
+   than 3 distinct source URLs. Now filters such clusters out (never pads/
+   fabricates a 3rd source); all-thin raises a clear domain `ValueError`.
+   TDD, added `TestThinClusterHandling`.
+2. `ef37bdb` **log skipped thin clusters + tighten the all-thin test** so the
+   test can't pass against the pre-fix leaked pydantic error.
+3. `e70359a` **fix: beat path-traversal (CodeRabbit MAJOR/security) + ingest
+   count + test rigor** — `_validate_beat` rejects `..`/absolute/separator
+   `beat` values before any path is built (verified: `--beat ../../tmp/EVIL`
+   is rejected, nothing escapes `--out-dir`); `total_items_ingested` now
+   counts RAW entries before `normalize_all` filtering; the thin-top test
+   asserts its ordering.
+
+**Final Night-1 state:** `bash scripts/verify.sh` → **134 passed**, ruff
+lint + format clean. Deterministic pitch pipeline runs end-to-end on fixtures
+(exactly 3 pitches). 5 commits on `feat/wire-pitch-pipeline`, **NOT pushed** —
+`nicovonbot` has pull-only access to `hectorluisalamo/newsroom` (repo-access
+wall), and the unattended outbound-guard blocks egress regardless.
+
+**CodeRabbit note:** the CLI surfaced findings across runs (it is
+non-deterministic run-to-run and hit its free-tier limit); the captured MAJOR
+security + correctness findings were fixed. The **authoritative full review is
+the GitHub CodeRabbit bot at PR time** — run when Hector pushes the branch.
+
+**To resume / land Night 1 (attended, Hector):** (a) grant `nicovonbot` write
+on `hectorluisalamo/newsroom` (or push the branch yourself), (b) push
+`feat/wire-pitch-pipeline` + open a PR (do NOT let the shift auto-merge), (c)
+let the PR-time CodeRabbit bot review, address anything it flags, then merge.
+Then Night 2 (per §2) = real per-module unit tests.
