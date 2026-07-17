@@ -1,8 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Sample Feed 2</title>
-    <link>https://example.org</link>
+    <title>Science Desk Weekly</title>
+    <link>https://example.org/science-desk-weekly</link>
     <description>A second sample RSS feed for testing source diversity.</description>
+    <item>
+      <title>White House Defends AI Chip Export Controls Amid Industry Pushback</title>
+      <link>https://example.org/science-desk-weekly/white-house-defends-export-controls</link>
+      <description>Administration officials defended the new AI chip export restrictions to China, arguing the controls on artificial intelligence chip technology protect national security.</description>
+      <pubDate>Thu, 15 Jan 2026 08:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/white-house-defends-export-controls</guid>
+    </item>
+    <item>
+      <title>Quantum Computing Error Correction Milestone Draws Scrutiny</title>
+      <link>https://example.org/science-desk-weekly/quantum-milestone-scrutiny</link>
+      <description>Independent researchers are reviewing claims of an error-corrected qubits milestone in quantum computing, questioning whether the results can be replicated.</description>
+      <pubDate>Tue, 13 Jan 2026 20:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/quantum-milestone-scrutiny</guid>
+    </item>
+    <item>
+      <title>Investors Pour Money Into Error-Corrected Quantum Computing Startups</title>
+      <link>https://example.org/science-desk-weekly/quantum-startups-investment</link>
+      <description>Venture capital is flowing into quantum computing startups following claims of an error-corrected qubits breakthrough earlier this week.</description>
+      <pubDate>Wed, 14 Jan 2026 11:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/quantum-startups-investment</guid>
+    </item>
+    <item>
+      <title>Rival Firms Race to Match New Satellite Constellation Launch</title>
+      <link>https://example.org/science-desk-weekly/rival-firms-satellite-race</link>
+      <description>Competing companies are accelerating their own orbital launch plans after a rival's satellite constellation launch dominated headlines this week.</description>
+      <pubDate>Wed, 14 Jan 2026 21:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/rival-firms-satellite-race</guid>
+    </item>
+    <item>
+      <title>Gene-Editing Therapy Trial Shows Promising Early Results</title>
+      <link>https://example.org/science-desk-weekly/gene-editing-trial-results</link>
+      <description>A gene-editing therapy trial using CRISPR technology reported promising early results for patients with a rare genetic blood disorder.</description>
+      <pubDate>Tue, 13 Jan 2026 16:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/gene-editing-trial-results</guid>
+    </item>
+    <item>
+      <title>Regulators Scrutinize Gene-Editing Therapy Trial Data</title>
+      <link>https://example.org/science-desk-weekly/gene-editing-regulators-scrutinize</link>
+      <description>Health regulators are closely reviewing data from the gene-editing therapy trial before deciding on approval for wider use.</description>
+      <pubDate>Wed, 14 Jan 2026 13:00:00 GMT</pubDate>
+      <guid>https://example.org/science-desk-weekly/gene-editing-regulators-scrutinize</guid>
+    </item>
   </channel>
 </rss>
