@@ -263,6 +263,45 @@ class TestWriteDraft:
         assert draft.body_md == off_target_text
         assert draft.word_count == 51  # 50 "wordN" tokens + the [src:1] marker
 
+    def test_retry_corrections_are_not_stacked_across_attempts(self):
+        # Each retry must append a single fresh correction to the *original*
+        # user prompt, not to the previous retry's already-corrected prompt.
+        # Otherwise attempt 2's prompt carries both attempt 1's and attempt
+        # 2's correction, and the model sees conflicting length guidance.
+        pitch = _make_pitch()
+        brief = _make_brief([_make_cluster("cluster-1")])
+        voice = _make_voice()
+        off_target_text = _words(50)
+        provider = _FakeProvider([off_target_text])
+
+        write_draft(
+            pitch,
+            brief,
+            voice,
+            "Guidance.",
+            provider,
+            now=_NOW,
+            beat="science_tech",
+            date=date(2026, 1, 15),
+            max_retries=2,
+        )
+
+        assert len(provider.calls) == 3
+        _, first_user_prompt, _ = provider.calls[0]
+        _, second_user_prompt, _ = provider.calls[1]
+        _, third_user_prompt, _ = provider.calls[2]
+
+        correction_marker = "Your previous draft was"
+        assert first_user_prompt.count(correction_marker) == 0
+        assert second_user_prompt.count(correction_marker) == 1
+        assert third_user_prompt.count(correction_marker) == 1
+
+        # The final retry's prompt must still be built on top of the
+        # original prompt (guidance intact), not on top of attempt 2's
+        # already-corrected prompt.
+        assert second_user_prompt.startswith(first_user_prompt)
+        assert third_user_prompt.startswith(first_user_prompt)
+
     def test_forwards_custom_target_words_into_assembled_system_prompt(self):
         # write_draft's target_words must reach assemble_prompt, not just
         # the retry-tolerance check, so the model is instructed toward the

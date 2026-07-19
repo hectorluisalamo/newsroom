@@ -109,18 +109,21 @@ def write_draft(
 
     Assembles the prompt, calls the provider, and — if the response's word
     count falls outside `target_words +/- tolerance` — retries with a
-    corrective length instruction appended to the user prompt, up to
-    `max_retries` additional calls (hard cap: at most `1 + max_retries`
-    total `generate()` calls). If the cap is exhausted without landing in
-    tolerance, the last response is accepted and a warning is logged —
-    word count is a post-check here, not a hard gate (that's QA, Night 4).
+    corrective length instruction appended to the original user prompt, up
+    to `max_retries` additional calls (hard cap: at most `1 + max_retries`
+    total `generate()` calls). Each retry appends a single fresh correction
+    to the original prompt rather than stacking onto the previous retry's
+    prompt, so the model never sees conflicting length instructions. If the
+    cap is exhausted without landing in tolerance, the last response is
+    accepted and a warning is logged — word count is a post-check here, not
+    a hard gate (that's QA, Night 4).
     """
-    system_prompt, user_prompt = assemble_prompt(
+    system_prompt, base_user_prompt = assemble_prompt(
         pitch, brief, voice, guidance, target_words=target_words
     )
     max_tokens = max(DEFAULT_MAX_TOKENS, int(target_words * 3))
 
-    response = provider.generate(system_prompt, user_prompt, max_tokens=max_tokens)
+    response = provider.generate(system_prompt, base_user_prompt, max_tokens=max_tokens)
     word_count = len(response.text.split())
 
     attempt = 0
@@ -128,7 +131,7 @@ def write_draft(
         attempt += 1
         direction = "shorter" if word_count > target_words else "longer"
         user_prompt = (
-            f"{user_prompt}\n\n"
+            f"{base_user_prompt}\n\n"
             f"Your previous draft was {word_count} words; the target is "
             f"{target_words} words (+/- {tolerance}). Revise to be "
             f"significantly {direction} and land within tolerance."

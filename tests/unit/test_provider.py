@@ -2,6 +2,8 @@
 # ABOUTME: Covers FakeLLMProvider behavior and AnthropicProvider model resolution.
 """Tests for newsroom.draft.provider and newsroom.draft.anthropic_provider."""
 
+import anthropic
+import httpx
 import pytest
 
 from conftest import FakeLLMProvider
@@ -195,3 +197,26 @@ class TestAnthropicProviderGenerate:
 
         with pytest.raises(RuntimeError, match="no text block"):
             provider.generate("system", "user", max_tokens=100)
+
+    def test_wraps_sdk_api_error_in_runtime_error_naming_the_model(self, monkeypatch):
+        # anthropic.APIError is the SDK's base exception (covers HTTP,
+        # timeout, and rate-limit failures). It must never surface raw —
+        # generate() should re-raise a RuntimeError that names the model
+        # and chains the original exception, with no network call made.
+        monkeypatch.delenv("NEWSROOM_MODEL", raising=False)
+        provider = AnthropicProvider(model="claude-explicit-model", api_key="x")
+        sdk_error = anthropic.APIError(
+            "rate limit exceeded",
+            request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
+            body=None,
+        )
+
+        def _raise(**kw):
+            raise sdk_error
+
+        monkeypatch.setattr(provider._client.messages, "create", _raise)
+
+        with pytest.raises(RuntimeError, match="claude-explicit-model") as exc_info:
+            provider.generate("system", "user", max_tokens=100)
+
+        assert exc_info.value.__cause__ is sdk_error

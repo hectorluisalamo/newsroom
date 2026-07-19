@@ -175,3 +175,24 @@ class TestDraftPipeline:
                 config_dir=_CONFIG_EXAMPLE,
                 provider=FakeLLMProvider(word_count=700),
             )
+
+    def test_missing_guidance_file_raises_clear_error(self, tmp_path):
+        # guidance_file is a caller-controlled CLI flag; a typo'd or missing
+        # path must raise a clear ValueError before the bare read_text()
+        # would otherwise surface a raw FileNotFoundError.
+        beat_dir = _run_pitch_cmd(tmp_path)
+        pitches = json.loads((beat_dir / "pitches.json").read_text())
+        pitch_id = pitches["pitches"][0]["pitch_id"]
+        missing_guidance_file = tmp_path / "does-not-exist.md"
+
+        with pytest.raises(ValueError, match="guidance file"):
+            commands.draft_cmd(
+                beat="science_tech",
+                date="2026-01-15",
+                pitch_id=pitch_id,
+                guidance_file=missing_guidance_file,
+                now=_FIXED_NOW,
+                out_dir=tmp_path,
+                config_dir=_CONFIG_EXAMPLE,
+                provider=FakeLLMProvider(word_count=700),
+            )

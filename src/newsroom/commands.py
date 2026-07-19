@@ -171,6 +171,9 @@ def draft_cmd(
         raise ValueError(msg)
 
     voice = settings.load_voice(beat, resolved_config_dir)
+    if not guidance_file.is_file():
+        msg = f"guidance file {str(guidance_file)!r} not found"
+        raise ValueError(msg)
     guidance = guidance_file.read_text()
 
     active_provider = provider if provider is not None else AnthropicProvider()
