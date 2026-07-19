@@ -7,7 +7,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
-from newsroom.models import BriefCluster, BriefPack, FeedItem, Pitch, PitchSet
+from newsroom.models import BriefCluster, BriefPack, Draft, FeedItem, Pitch, PitchSet
 from newsroom.render.render import (
     render_brief_json,
     render_brief_md,
@@ -95,6 +95,31 @@ def _make_pitch_set(pitches: list[Pitch]) -> PitchSet:
         pitches=pitches,
         brief_pack_ref="brief-ref-1",
         generated_at=_NOW,
+    )
+
+
+def _make_draft(
+    *,
+    title: str = "A Draft Title",
+    body_md: str = "Body text with [src:1] and [src:2] citations.",
+    sources: list[str] | None = None,
+) -> Draft:
+    return Draft(
+        beat="science_tech",
+        date=date(2026, 1, 15),
+        pitch_id="p1",
+        title=title,
+        body_md=body_md,
+        word_count=len(body_md.split()),
+        sources=sources
+        or [
+            "https://example.com/a",
+            "https://example.com/b",
+        ],
+        guidance_used="Keep it punchy.",
+        model_id="fake-model-v1",
+        generated_at=_NOW,
+        token_usage={"input_tokens": 100, "output_tokens": 200},
     )
 
 
@@ -331,17 +356,60 @@ class TestRenderPitchesMd:
             assert f"  - {url}" in p1_section
 
 
+class TestRenderDraftJson:
+    def test_round_trips_as_valid_json(self):
+        draft = _make_draft()
+
+        rendered = render_draft_json(draft)
+        parsed = json.loads(rendered)
+
+        assert parsed["title"] == "A Draft Title"
+        assert parsed["word_count"] == draft.word_count
+        assert parsed["sources"] == [
+            "https://example.com/a",
+            "https://example.com/b",
+        ]
+
+    def test_repeated_calls_are_byte_identical(self):
+        draft = _make_draft()
+
+        first = render_draft_json(draft)
+        second = render_draft_json(draft)
+
+        assert first == second
+
+
+class TestRenderDraftMd:
+    def test_includes_title_heading(self):
+        draft = _make_draft(title="My Great Column")
+
+        rendered = render_draft_md(draft)
+
+        assert "# My Great Column" in rendered.splitlines()
+
+    def test_includes_body(self):
+        draft = _make_draft(body_md="Some body with [src:1] citation.")
+
+        rendered = render_draft_md(draft)
+
+        assert "Some body with [src:1] citation." in rendered
+
+    def test_sources_section_is_numbered_list(self):
+        draft = _make_draft(sources=["https://example.com/a", "https://example.com/b"])
+
+        rendered = render_draft_md(draft)
+
+        assert "## Sources" in rendered
+        lines = rendered.splitlines()
+        sources_idx = lines.index("## Sources")
+        sources_section = "\n".join(lines[sources_idx:])
+        assert "1. https://example.com/a" in sources_section
+        assert "2. https://example.com/b" in sources_section
+
+
 class TestUnimplementedRenderers:
-    """Pins the Night-3/4 boundary: draft and QA-report rendering are not
-    yet implemented."""
-
-    def test_render_draft_md_raises_not_implemented(self):
-        with pytest.raises(NotImplementedError):
-            render_draft_md(None)
-
-    def test_render_draft_json_raises_not_implemented(self):
-        with pytest.raises(NotImplementedError):
-            render_draft_json(None)
+    """Pins the Night-3/4 boundary: QA-report rendering is not yet
+    implemented (report.json is Night 4)."""
 
     def test_render_report_json_raises_not_implemented(self):
         with pytest.raises(NotImplementedError):

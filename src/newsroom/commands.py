@@ -8,15 +8,20 @@ from pathlib import Path
 from newsroom import settings
 from newsroom.cluster.tfidf import TfidfClusterer
 from newsroom.dedupe.dedupe import dedupe_items
+from newsroom.draft.anthropic_provider import AnthropicProvider
+from newsroom.draft.provider import LLMProvider
+from newsroom.draft.writer import write_draft
 from newsroom.ingestion.rss import fetch_all_feeds, fetch_local_feeds
 from newsroom.logging_config import setup_logging
-from newsroom.models import BriefPack
+from newsroom.models import BriefPack, PitchSet
 from newsroom.normalize.normalize import normalize_all
 from newsroom.pitches.pitches import generate_pitches
 from newsroom.rank.rank import rank_clusters
 from newsroom.render.render import (
     render_brief_json,
     render_brief_md,
+    render_draft_json,
+    render_draft_md,
     render_pitches_json,
     render_pitches_md,
 )
@@ -122,9 +127,54 @@ def draft_cmd(
     now: str | None,
     out_dir: Path,
     verbose: bool = False,
+    config_dir: Path | None = None,
+    provider: LLMProvider | None = None,
 ) -> None:
-    """Run the draft pipeline: load pitch, assemble prompt, generate draft, run QA."""
-    raise NotImplementedError
+    """Run the draft pipeline: load pitch, assemble prompt, generate draft, run QA.
+
+    `config_dir` defaults to `config/`, mirroring `pitch_cmd`. `provider`
+    defaults to a real `AnthropicProvider` (the money seam) so tests can
+    inject a `FakeLLMProvider` instead of making a paid LLM call.
+    """
+    _validate_beat(beat)
+    setup_logging(verbose)
+    resolved_now = resolve_now(now)
+    resolved_config_dir = config_dir if config_dir is not None else Path("config")
+
+    beat_dir = out_dir / date / beat
+    pitch_set = PitchSet.model_validate_json((beat_dir / "pitches.json").read_text())
+    pitch = next((p for p in pitch_set.pitches if p.pitch_id == pitch_id), None)
+    if pitch is None:
+        msg = f"pitch_id {pitch_id!r} not found"
+        raise ValueError(msg)
+
+    brief = BriefPack.model_validate_json((beat_dir / "brief.json").read_text())
+    voice = settings.load_voice(beat, resolved_config_dir)
+    guidance = guidance_file.read_text()
+
+    active_provider = provider if provider is not None else AnthropicProvider()
+
+    draft = write_draft(
+        pitch,
+        brief,
+        voice,
+        guidance,
+        active_provider,
+        now=resolved_now,
+        beat=beat,
+        date=pitch_set.date,
+    )
+
+    (beat_dir / "draft.json").write_text(render_draft_json(draft))
+    (beat_dir / "draft.md").write_text(render_draft_md(draft))
+
+    logger.info(
+        "Wrote draft for beat=%s date=%s pitch_id=%s to %s",
+        beat,
+        date,
+        pitch_id,
+        beat_dir,
+    )
 
 
 def qa_cmd(
