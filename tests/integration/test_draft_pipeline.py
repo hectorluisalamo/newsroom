@@ -105,12 +105,14 @@ class TestDraftPipeline:
                 provider=FakeLLMProvider(word_count=700),
             )
 
-    def test_date_mismatch_against_pitch_set_raises(self, tmp_path):
+    def test_date_mismatch_against_pitch_set_only_raises(self, tmp_path):
         # pitches.json for 2026-01-15 lives under out_dir/2026-01-15/<beat>/.
         # Pointing draft_cmd at a *different* but still well-formed ISO date
         # that happens to resolve to the same directory tree (via a manually
         # relocated pitches.json) must be rejected rather than silently
-        # drafted against a mismatched pitch set.
+        # drafted against a mismatched pitch set. brief.json is patched to
+        # match the requested --date so the brief guard cannot also fire —
+        # isolating the pitch_set guard from its sibling.
         beat_dir = _run_pitch_cmd(tmp_path)
         pitches = json.loads((beat_dir / "pitches.json").read_text())
         pitch_id = pitches["pitches"][0]["pitch_id"]
@@ -121,11 +123,41 @@ class TestDraftPipeline:
         (mismatched_dir / "pitches.json").write_text(
             (beat_dir / "pitches.json").read_text()
         )
+        brief = json.loads((beat_dir / "brief.json").read_text())
+        brief["date"] = "2026-01-16"
+        (mismatched_dir / "brief.json").write_text(json.dumps(brief))
+
+        with pytest.raises(ValueError, match="pitch_set date .* does not match"):
+            commands.draft_cmd(
+                beat="science_tech",
+                date="2026-01-16",
+                pitch_id=pitch_id,
+                guidance_file=guidance_file,
+                now=_FIXED_NOW,
+                out_dir=tmp_path,
+                config_dir=_CONFIG_EXAMPLE,
+                provider=FakeLLMProvider(word_count=700),
+            )
+
+    def test_date_mismatch_against_brief_only_raises(self, tmp_path):
+        # Mirror of the pitch_set-only case above, but with the mismatch
+        # confined to brief.json: pitches.json is patched to match the
+        # requested --date so the pitch_set guard cannot also fire —
+        # isolating the brief guard from its sibling.
+        beat_dir = _run_pitch_cmd(tmp_path)
+        pitches = json.loads((beat_dir / "pitches.json").read_text())
+        pitch_id = pitches["pitches"][0]["pitch_id"]
+        guidance_file = _write_guidance(tmp_path)
+
+        mismatched_dir = tmp_path / "2026-01-16" / "science_tech"
+        mismatched_dir.mkdir(parents=True)
         (mismatched_dir / "brief.json").write_text(
             (beat_dir / "brief.json").read_text()
         )
+        pitches["date"] = "2026-01-16"
+        (mismatched_dir / "pitches.json").write_text(json.dumps(pitches))
 
-        with pytest.raises(ValueError, match="does not match"):
+        with pytest.raises(ValueError, match="brief_pack date .* does not match"):
             commands.draft_cmd(
                 beat="science_tech",
                 date="2026-01-16",
