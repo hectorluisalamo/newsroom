@@ -108,19 +108,22 @@ stub signatures were placeholders, not locked contracts):**
 - Fix `scripts/verify.sh` to invoke `uv run ruff`/`uv run pytest` so it works
   from a clean clone without manual venv activation.
 
-### Night 2 (proposed) — Per-module unit tests for the pitch pipeline
-- The Night-1 slice is covered by integration tests only. Each pipeline module
-  (`normalize`, `dedupe`, `cluster/tfidf`, `rank`, `pitches`, `render`) still
-  has only a placeholder unit test. Replace each placeholder with real
-  unit-level coverage of edge cases the integration test doesn't reach:
-  dedupe's exact-vs-fuzzy tie-breaking, cluster's zero-feature fallback path,
-  rank's normalization when all clusters tie, pitch generation's 0/1/2-cluster
-  branches (the integration fixtures only exercise the >=3-cluster branch),
-  render's JSON/Markdown determinism.
+### Night 2 — Per-module unit tests for the pitch pipeline — DONE (PR #4)
+- **Scope split (recorded 2026-07-18):** `dedupe`, `cluster/tfidf`, `rank`, and
+  `pitches` got real unit tests during the attended 2026-07-17 session (the
+  Fable-panel work that took the suite to 142). So the Night-Shift run
+  (2026-07-18) closed the smaller remaining slice — real per-module unit tests
+  for `normalize`, `render`, and `utils/time_utils` — the three modules still on
+  placeholder unit tests. (`qa` stays a placeholder until its module is
+  implemented in Night 4; a real unit test is impossible before then.)
+- Result: suite at **202 passed**, ruff clean, test-only (no `src/` change).
+  Fresh-context adversarial review (Fable 5) caught + closed two coverage holes
+  (unasserted brief item-link loop, unasserted pitch `- Angle:` line); CodeRabbit
+  CLI clean. Branch `test/pitch-module-unit-tests` → **PR #4**
+  (`hectorluisalamo/newsroom#4`), awaiting review/merge.
 - No-exceptions testing policy (`~/.claude/rules/engineering.md`) calls for
-  unit + integration + e2e on every project; Night 1 satisfied integration
-  only for the pitch slice by explicit scope from the orchestrator's task
-  spec. This is the known gap to close.
+  unit + integration + e2e on every project; with Night 2 landed, the pitch
+  slice now has integration + per-module unit coverage. (E2E is Night 5.)
 
 ### Night 3 (proposed) — `draft_cmd` with a mocked LLM provider
 - Implement `draft/writer.py` (prompt assembly: pitch + brief excerpts + voice
