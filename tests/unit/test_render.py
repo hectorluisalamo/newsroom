@@ -259,6 +259,12 @@ class TestRenderPitchesMd:
         rendered = render_pitches_md(pitch_set)
 
         lines = rendered.splitlines()
+        assert "## Has Points" in lines, (
+            "expected '## Has Points' section in rendered output"
+        )
+        assert "## No Points" in lines, (
+            "expected '## No Points' section in rendered output"
+        )
         has_points_idx = lines.index("## Has Points")
         no_points_idx = lines.index("## No Points")
         has_points_section = "\n".join(lines[has_points_idx:no_points_idx])
@@ -282,6 +288,12 @@ class TestRenderPitchesMd:
         rendered = render_pitches_md(pitch_set)
 
         lines = rendered.splitlines()
+        assert "## Risky Pitch" in lines, (
+            "expected '## Risky Pitch' section in rendered output"
+        )
+        assert "## Safe Pitch" in lines, (
+            "expected '## Safe Pitch' section in rendered output"
+        )
         risky_idx = lines.index("## Risky Pitch")
         safe_idx = lines.index("## Safe Pitch")
         risky_section = "\n".join(lines[risky_idx:safe_idx])
@@ -309,8 +321,14 @@ class TestRenderPitchesMd:
 
         rendered = render_pitches_md(pitch_set)
 
+        lines = rendered.splitlines()
+        assert "## Pitch One" in lines, "expected '## Pitch One' section"
+        assert "## Pitch Two" in lines, "expected '## Pitch Two' section"
+        p1_start = lines.index("## Pitch One")
+        p2_start = lines.index("## Pitch Two")
+        p1_section = "\n".join(lines[p1_start:p2_start])
         for url in urls:
-            assert f"  - {url}" in rendered
+            assert f"  - {url}" in p1_section
 
 
 class TestUnimplementedRenderers:

@@ -107,6 +107,18 @@ class TestNormalizeEntryTextCleaning:
 
         assert item.summary == "Only a description here."
 
+    def test_empty_summary_falls_back_to_description(self):
+        entry = {
+            "link": "https://example.com/article",
+            "title": "Headline",
+            "summary": "",
+            "description": "Fallback description.",
+        }
+
+        item = normalize_entry(entry, _SOURCE, beat="science_tech", now=_NOW)
+
+        assert item.summary == "Fallback description."
+
 
 class TestNormalizeEntryItemId:
     def test_item_id_is_sha256_of_canonical_url(self):
