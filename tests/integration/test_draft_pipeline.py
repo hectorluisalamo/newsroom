@@ -89,6 +89,9 @@ class TestDraftPipeline:
     def test_non_iso_date_raises_and_does_not_escape_out_dir(self, tmp_path):
         # `date` is caller-controlled; a path-traversal payload must be
         # rejected by strict ISO parsing before it's ever joined into a path.
+        escaped_root = tmp_path.parent / "evil"
+        assert not escaped_root.exists()
+
         beat_dir = _run_pitch_cmd(tmp_path)
         assert beat_dir.exists()
         guidance_file = _write_guidance(tmp_path)
@@ -104,6 +107,10 @@ class TestDraftPipeline:
                 config_dir=_CONFIG_EXAMPLE,
                 provider=FakeLLMProvider(word_count=700),
             )
+
+        # Belt-and-suspenders: validation must fail before any escaped path
+        # is created outside out_dir.
+        assert not escaped_root.exists()
 
     def test_date_mismatch_against_pitch_set_only_raises(self, tmp_path):
         # pitches.json for 2026-01-15 lives under out_dir/2026-01-15/<beat>/.
