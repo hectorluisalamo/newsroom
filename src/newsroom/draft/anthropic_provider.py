@@ -44,8 +44,16 @@ class AnthropicProvider(LLMProvider):
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
+        text = "".join(
+            block.text
+            for block in response.content
+            if getattr(block, "type", None) == "text"
+        )
+        if not text:
+            msg = "no text block in Anthropic response"
+            raise RuntimeError(msg)
         return LLMResponse(
-            text=response.content[0].text,
+            text=text,
             token_usage={
                 "input_tokens": response.usage.input_tokens,
                 "output_tokens": response.usage.output_tokens,

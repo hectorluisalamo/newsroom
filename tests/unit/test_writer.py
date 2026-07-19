@@ -179,6 +179,33 @@ class TestAssemblePrompt:
         for point in pitch.key_points:
             assert point in user_prompt
 
+    def test_custom_target_words_used_in_system_prompt_instead_of_default(self):
+        # A configurable target_words must actually steer the model's
+        # instructions, not just gate the post-generation retry check —
+        # otherwise a custom target instructs toward the default and the
+        # writer judges the result against a target it never asked for.
+        system_prompt, _ = assemble_prompt(
+            _make_pitch(),
+            _make_brief([_make_cluster("cluster-1")]),
+            _make_voice(),
+            "Keep it punchy.",
+            target_words=1200,
+        )
+
+        assert "1200" in system_prompt
+        assert "approximately 1200 words" in system_prompt
+        assert "700" not in system_prompt
+
+    def test_default_target_words_used_when_not_specified(self):
+        system_prompt, _ = assemble_prompt(
+            _make_pitch(),
+            _make_brief([_make_cluster("cluster-1")]),
+            _make_voice(),
+            "Keep it punchy.",
+        )
+
+        assert "approximately 700 words" in system_prompt
+
 
 class TestWriteDraft:
     def test_happy_path_returns_valid_draft(self):
@@ -235,6 +262,74 @@ class TestWriteDraft:
         assert len(provider.calls) == 3
         assert draft.body_md == off_target_text
         assert draft.word_count == 51  # 50 "wordN" tokens + the [src:1] marker
+
+    def test_forwards_custom_target_words_into_assembled_system_prompt(self):
+        # write_draft's target_words must reach assemble_prompt, not just
+        # the retry-tolerance check, so the model is instructed toward the
+        # same target it's judged against.
+        pitch = _make_pitch()
+        brief = _make_brief([_make_cluster("cluster-1")])
+        voice = _make_voice()
+        provider = _FakeProvider([_words(1200)])
+
+        write_draft(
+            pitch,
+            brief,
+            voice,
+            "Keep it punchy.",
+            provider,
+            now=_NOW,
+            beat="science_tech",
+            date=date(2026, 1, 15),
+            target_words=1200,
+        )
+
+        assert len(provider.calls) == 1
+        system_prompt, _user_prompt, _max_tokens = provider.calls[0]
+        assert "approximately 1200 words" in system_prompt
+
+    def test_max_tokens_scales_with_custom_target_words(self):
+        # A large custom target must not be truncated by a hardcoded
+        # max_tokens cap sized for the default 700-word target.
+        pitch = _make_pitch()
+        brief = _make_brief([_make_cluster("cluster-1")])
+        voice = _make_voice()
+        provider = _FakeProvider([_words(3000)])
+
+        write_draft(
+            pitch,
+            brief,
+            voice,
+            "Keep it punchy.",
+            provider,
+            now=_NOW,
+            beat="science_tech",
+            date=date(2026, 1, 15),
+            target_words=3000,
+        )
+
+        _system_prompt, _user_prompt, max_tokens = provider.calls[0]
+        assert max_tokens > 1500
+
+    def test_max_tokens_at_least_default_for_default_target_words(self):
+        pitch = _make_pitch()
+        brief = _make_brief([_make_cluster("cluster-1")])
+        voice = _make_voice()
+        provider = _FakeProvider([_words(700)])
+
+        write_draft(
+            pitch,
+            brief,
+            voice,
+            "Keep it punchy.",
+            provider,
+            now=_NOW,
+            beat="science_tech",
+            date=date(2026, 1, 15),
+        )
+
+        _system_prompt, _user_prompt, max_tokens = provider.calls[0]
+        assert max_tokens >= 1500
 
     def test_src_n_order_preserved_into_draft_sources(self):
         expected_urls = [

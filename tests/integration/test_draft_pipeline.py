@@ -85,3 +85,54 @@ class TestDraftPipeline:
                 config_dir=_CONFIG_EXAMPLE,
                 provider=FakeLLMProvider(word_count=700),
             )
+
+    def test_non_iso_date_raises_and_does_not_escape_out_dir(self, tmp_path):
+        # `date` is caller-controlled; a path-traversal payload must be
+        # rejected by strict ISO parsing before it's ever joined into a path.
+        beat_dir = _run_pitch_cmd(tmp_path)
+        assert beat_dir.exists()
+        guidance_file = _write_guidance(tmp_path)
+
+        with pytest.raises(ValueError, match="invalid --date"):
+            commands.draft_cmd(
+                beat="science_tech",
+                date="../evil",
+                pitch_id="does-not-matter",
+                guidance_file=guidance_file,
+                now=_FIXED_NOW,
+                out_dir=tmp_path,
+                config_dir=_CONFIG_EXAMPLE,
+                provider=FakeLLMProvider(word_count=700),
+            )
+
+    def test_date_mismatch_against_pitch_set_raises(self, tmp_path):
+        # pitches.json for 2026-01-15 lives under out_dir/2026-01-15/<beat>/.
+        # Pointing draft_cmd at a *different* but still well-formed ISO date
+        # that happens to resolve to the same directory tree (via a manually
+        # relocated pitches.json) must be rejected rather than silently
+        # drafted against a mismatched pitch set.
+        beat_dir = _run_pitch_cmd(tmp_path)
+        pitches = json.loads((beat_dir / "pitches.json").read_text())
+        pitch_id = pitches["pitches"][0]["pitch_id"]
+        guidance_file = _write_guidance(tmp_path)
+
+        mismatched_dir = tmp_path / "2026-01-16" / "science_tech"
+        mismatched_dir.mkdir(parents=True)
+        (mismatched_dir / "pitches.json").write_text(
+            (beat_dir / "pitches.json").read_text()
+        )
+        (mismatched_dir / "brief.json").write_text(
+            (beat_dir / "brief.json").read_text()
+        )
+
+        with pytest.raises(ValueError, match="does not match"):
+            commands.draft_cmd(
+                beat="science_tech",
+                date="2026-01-16",
+                pitch_id=pitch_id,
+                guidance_file=guidance_file,
+                now=_FIXED_NOW,
+                out_dir=tmp_path,
+                config_dir=_CONFIG_EXAMPLE,
+                provider=FakeLLMProvider(word_count=700),
+            )

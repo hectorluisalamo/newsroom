@@ -31,6 +31,7 @@ def assemble_prompt(
     brief: BriefPack,
     voice: VoiceConstitution,
     guidance: str,
+    target_words: int = DEFAULT_TARGET_WORDS,
 ) -> tuple[str, str]:
     """Assemble system and user prompts for draft generation.
 
@@ -47,7 +48,7 @@ def assemble_prompt(
     system_prompt = (
         "\n\n".join(system_sections)
         + "\n\n"
-        + f"Write a column of approximately {DEFAULT_TARGET_WORDS} words.\n\n"
+        + f"Write a column of approximately {target_words} words.\n\n"
         + "Cite every claim inline with `[src:N]` where N is the 1-based "
         "index into the numbered Sources list provided in the user prompt. "
         "Do not browse the web or introduce sources beyond the ones "
@@ -114,11 +115,12 @@ def write_draft(
     tolerance, the last response is accepted and a warning is logged —
     word count is a post-check here, not a hard gate (that's QA, Night 4).
     """
-    system_prompt, user_prompt = assemble_prompt(pitch, brief, voice, guidance)
-
-    response = provider.generate(
-        system_prompt, user_prompt, max_tokens=DEFAULT_MAX_TOKENS
+    system_prompt, user_prompt = assemble_prompt(
+        pitch, brief, voice, guidance, target_words=target_words
     )
+    max_tokens = max(DEFAULT_MAX_TOKENS, int(target_words * 3))
+
+    response = provider.generate(system_prompt, user_prompt, max_tokens=max_tokens)
     word_count = len(response.text.split())
 
     attempt = 0
@@ -131,9 +133,7 @@ def write_draft(
             f"{target_words} words (+/- {tolerance}). Revise to be "
             f"significantly {direction} and land within tolerance."
         )
-        response = provider.generate(
-            system_prompt, user_prompt, max_tokens=DEFAULT_MAX_TOKENS
-        )
+        response = provider.generate(system_prompt, user_prompt, max_tokens=max_tokens)
         word_count = len(response.text.split())
 
     if abs(word_count - target_words) > tolerance:

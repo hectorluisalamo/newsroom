@@ -2,6 +2,8 @@
 # ABOUTME: Covers FakeLLMProvider behavior and AnthropicProvider model resolution.
 """Tests for newsroom.draft.provider and newsroom.draft.anthropic_provider."""
 
+import pytest
+
 from conftest import FakeLLMProvider
 from newsroom.draft.anthropic_provider import _DEFAULT_MODEL, AnthropicProvider
 from newsroom.draft.provider import LLMResponse
@@ -112,3 +114,84 @@ class TestAnthropicProviderModelResolution:
         monkeypatch.delenv("NEWSROOM_MODEL", raising=False)
         provider = AnthropicProvider(model="claude-explicit-model")
         assert provider.model_id == provider.model_id == "claude-explicit-model"
+
+
+# ---------------------------------------------------------------------------
+# AnthropicProvider.generate() — text-block extraction from response.content
+# ---------------------------------------------------------------------------
+#
+# Claude responses (esp. with default adaptive thinking) can put a thinking
+# block ahead of the text block, so `response.content[0].text` is fragile:
+# it can AttributeError on a thinking block (no `.text`) or silently drop
+# real content. `generate()` must scan every block, join the `type=="text"`
+# ones, and raise a clear error if none are present. The client's
+# `messages.create` is monkeypatched to a stub — no network call is made
+# (the conftest socket guard would block one anyway).
+
+
+class _StubBlock:
+    """Minimal stand-in for an Anthropic content block (thinking or text)."""
+
+    def __init__(self, block_type: str, text: str | None = None) -> None:
+        self.type = block_type
+        if text is not None:
+            self.text = text
+
+
+class _StubUsage:
+    def __init__(self, input_tokens: int = 10, output_tokens: int = 20) -> None:
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+
+
+class _StubResponse:
+    def __init__(
+        self, content: list[_StubBlock], usage: _StubUsage | None = None
+    ) -> None:
+        self.content = content
+        self.usage = usage or _StubUsage()
+
+
+class TestAnthropicProviderGenerate:
+    def test_extracts_text_block_when_preceded_by_thinking_block(self, monkeypatch):
+        monkeypatch.delenv("NEWSROOM_MODEL", raising=False)
+        provider = AnthropicProvider(model="claude-explicit-model", api_key="x")
+        thinking_block = _StubBlock("thinking", text="internal reasoning, not output")
+        text_block = _StubBlock("text", text="the actual draft body")
+        stub_response = _StubResponse([thinking_block, text_block])
+        monkeypatch.setattr(
+            provider._client.messages, "create", lambda **kw: stub_response
+        )
+
+        response = provider.generate("system", "user", max_tokens=100)
+
+        assert response.text == "the actual draft body"
+        assert response.token_usage == {"input_tokens": 10, "output_tokens": 20}
+
+    def test_joins_multiple_text_blocks(self, monkeypatch):
+        monkeypatch.delenv("NEWSROOM_MODEL", raising=False)
+        provider = AnthropicProvider(model="claude-explicit-model", api_key="x")
+        stub_response = _StubResponse(
+            [
+                _StubBlock("text", text="part one. "),
+                _StubBlock("text", text="part two."),
+            ]
+        )
+        monkeypatch.setattr(
+            provider._client.messages, "create", lambda **kw: stub_response
+        )
+
+        response = provider.generate("system", "user", max_tokens=100)
+
+        assert response.text == "part one. part two."
+
+    def test_raises_clear_error_when_no_text_block_present(self, monkeypatch):
+        monkeypatch.delenv("NEWSROOM_MODEL", raising=False)
+        provider = AnthropicProvider(model="claude-explicit-model", api_key="x")
+        stub_response = _StubResponse([_StubBlock("thinking", text="only reasoning")])
+        monkeypatch.setattr(
+            provider._client.messages, "create", lambda **kw: stub_response
+        )
+
+        with pytest.raises(RuntimeError, match="no text block"):
+            provider.generate("system", "user", max_tokens=100)

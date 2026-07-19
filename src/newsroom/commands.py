@@ -2,6 +2,7 @@
 # ABOUTME: Contains pitch_cmd, draft_cmd, and qa_cmd entry points.
 """Command implementations for the Newsroom CLI."""
 
+import datetime as dt
 import logging
 from pathlib import Path
 
@@ -141,7 +142,13 @@ def draft_cmd(
     resolved_now = resolve_now(now)
     resolved_config_dir = config_dir if config_dir is not None else Path("config")
 
-    beat_dir = out_dir / date / beat
+    try:
+        selected_date = dt.date.fromisoformat(date)
+    except ValueError as exc:
+        msg = f"invalid --date {date!r}: expected ISO YYYY-MM-DD"
+        raise ValueError(msg) from exc
+
+    beat_dir = out_dir / selected_date.isoformat() / beat
     pitch_set = PitchSet.model_validate_json((beat_dir / "pitches.json").read_text())
     pitch = next((p for p in pitch_set.pitches if p.pitch_id == pitch_id), None)
     if pitch is None:
@@ -149,6 +156,20 @@ def draft_cmd(
         raise ValueError(msg)
 
     brief = BriefPack.model_validate_json((beat_dir / "brief.json").read_text())
+
+    if pitch_set.date != selected_date:
+        msg = (
+            f"pitch_set date {pitch_set.date.isoformat()!r} does not match "
+            f"requested --date {selected_date.isoformat()!r}"
+        )
+        raise ValueError(msg)
+    if brief.date != selected_date:
+        msg = (
+            f"brief_pack date {brief.date.isoformat()!r} does not match "
+            f"requested --date {selected_date.isoformat()!r}"
+        )
+        raise ValueError(msg)
+
     voice = settings.load_voice(beat, resolved_config_dir)
     guidance = guidance_file.read_text()
 
