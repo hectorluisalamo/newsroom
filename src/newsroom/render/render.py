@@ -2,7 +2,7 @@
 # ABOUTME: Produces deterministic JSON and Markdown with stable key ordering.
 """Output rendering for the Newsroom pipeline."""
 
-from newsroom.models import BriefPack, PitchSet
+from newsroom.models import BriefPack, Draft, PitchSet
 
 
 def render_brief_json(brief: BriefPack) -> str:
@@ -70,14 +70,23 @@ def render_pitches_md(pitches: PitchSet) -> str:
     return "\n".join(lines)
 
 
-def render_draft_md(draft: object) -> str:
+def render_draft_md(draft: Draft) -> str:
     """Render a Draft as Substack-ready Markdown with a Sources section."""
-    raise NotImplementedError
+    lines = [
+        f"# {draft.title}",
+        "",
+        draft.body_md,
+        "",
+        "## Sources",
+    ]
+    for i, url in enumerate(draft.sources, start=1):
+        lines.append(f"{i}. {url}")
+    return "\n".join(lines)
 
 
-def render_draft_json(draft: object) -> str:
+def render_draft_json(draft: Draft) -> str:
     """Render a Draft as deterministic JSON."""
-    raise NotImplementedError
+    return draft.model_dump_json(indent=2)
 
 
 def render_report_json(report: object) -> str:
