@@ -16,7 +16,6 @@ _SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?]+(?!\d)")
 _STATS_RE = re.compile(
     r"\$\d[\d,]*(?:\.\d+)?|\d[\d,]*\.\d+%?|\d[\d,]*%|\d{1,3}(?:,\d{3})+"
 )
-_CITATION_MARKER_RE = re.compile(r"\[src:(\d+)\]")
 
 
 def _split_paragraphs(body_md: str) -> list[str]:
@@ -39,7 +38,8 @@ def check_unsourced_stats(draft: Draft, qa_config: QAConfig) -> list[QAFinding]:
     if not qa_config.source_attribution.require_citation_near_stats:
         return findings
 
-    citation_re = re.compile(qa_config.source_attribution.citation_pattern)
+    citation_pattern = qa_config.source_attribution.citation_pattern
+    citation_re = re.compile(citation_pattern)
     for index, paragraph in enumerate(_split_paragraphs(draft.body_md), start=1):
         if _STATS_RE.search(paragraph) and not citation_re.search(paragraph):
             findings.append(
@@ -49,7 +49,7 @@ def check_unsourced_stats(draft: Draft, qa_config: QAConfig) -> list[QAFinding]:
                     location=f"paragraph {index}",
                     message=(
                         "Paragraph contains a statistic without a nearby "
-                        "[src:N] citation marker."
+                        f"citation marker matching pattern '{citation_pattern}'."
                     ),
                     details={"paragraph_index": index, "paragraph": paragraph},
                 )
@@ -111,8 +111,11 @@ def check_voice_drift(
     findings: list[QAFinding] = []
     body_lower = draft.body_md.lower()
 
-    for phrase in voice.taboo_phrases:
-        pattern = re.compile(r"\b" + re.escape(phrase.lower()) + r"\b")
+    taboo_patterns = [
+        re.compile(r"\b" + re.escape(phrase.lower()) + r"\b")
+        for phrase in voice.taboo_phrases
+    ]
+    for phrase, pattern in zip(voice.taboo_phrases, taboo_patterns, strict=True):
         if pattern.search(body_lower):
             findings.append(
                 QAFinding(
@@ -162,18 +165,24 @@ def check_voice_drift(
     return findings
 
 
-def check_citation_integrity(draft: Draft) -> list[QAFinding]:
-    """Check that all [src:N] markers map to entries in draft.sources.
+def check_citation_integrity(draft: Draft, qa_config: QAConfig) -> list[QAFinding]:
+    """Check that all citation markers map to entries in draft.sources.
 
-    Verifies no orphaned citations and no missing source entries.
+    Uses the same configured citation pattern as check_unsourced_stats so
+    both checks agree on what counts as a citation marker. Verifies no
+    orphaned citations and no missing source entries.
     """
     findings: list[QAFinding] = []
     source_count = len(draft.sources)
     referenced: set[int] = set()
     seen_orphans: set[int] = set()
 
-    for match in _CITATION_MARKER_RE.finditer(draft.body_md):
-        marker_n = int(match.group(1))
+    citation_re = re.compile(qa_config.source_attribution.citation_pattern)
+    for match in citation_re.finditer(draft.body_md):
+        digit_match = re.search(r"\d+", match.group())
+        if digit_match is None:
+            continue
+        marker_n = int(digit_match.group())
         referenced.add(marker_n)
         if marker_n < 1 or marker_n > source_count:
             if marker_n in seen_orphans:
@@ -222,7 +231,7 @@ def _build_checks(
         ("unsourced_stats", lambda: check_unsourced_stats(draft, qa_config)),
         ("hedging", lambda: check_hedging(draft, qa_config)),
         ("voice_drift", lambda: check_voice_drift(draft, voice, qa_config)),
-        ("citation_integrity", lambda: check_citation_integrity(draft)),
+        ("citation_integrity", lambda: check_citation_integrity(draft, qa_config)),
     ]
 
 

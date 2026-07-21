@@ -177,6 +177,21 @@ class TestCheckUnsourcedStats:
         assert len(findings) == 1
         assert findings[0].check_name == "unsourced_stats"
 
+    def test_message_reflects_configured_citation_pattern(self):
+        draft = _make_draft(body_md="Adoption grew by 42% last year.")
+        custom_pattern = r"\[ref:\d+\]"
+        qa_config = _make_qa_config(
+            source_attribution=SourceAttributionConfig(
+                require_citation_near_stats=True,
+                citation_pattern=custom_pattern,
+            )
+        )
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert len(findings) == 1
+        assert custom_pattern in findings[0].message
+
 
 class TestCheckHedging:
     def test_flags_when_hedging_ratio_exceeds_max(self):
@@ -338,8 +353,9 @@ class TestCheckCitationIntegrity:
             body_md="A claim with a bad citation [src:9].",
             sources=["https://example.com/a", "https://example.com/b"],
         )
+        qa_config = _make_qa_config()
 
-        findings = check_citation_integrity(draft)
+        findings = check_citation_integrity(draft, qa_config)
 
         errors = [f for f in findings if f.severity == "error"]
         assert len(errors) == 1
@@ -350,8 +366,9 @@ class TestCheckCitationIntegrity:
             body_md="A claim with a citation [src:1].",
             sources=["https://example.com/a", "https://example.com/b"],
         )
+        qa_config = _make_qa_config()
 
-        findings = check_citation_integrity(draft)
+        findings = check_citation_integrity(draft, qa_config)
 
         assert len(findings) == 1
         assert findings[0].severity == "warning"
@@ -362,8 +379,9 @@ class TestCheckCitationIntegrity:
             body_md="First claim [src:1]. Second claim [src:2].",
             sources=["https://example.com/a", "https://example.com/b"],
         )
+        qa_config = _make_qa_config()
 
-        findings = check_citation_integrity(draft)
+        findings = check_citation_integrity(draft, qa_config)
 
         assert findings == []
 
@@ -375,10 +393,43 @@ class TestCheckCitationIntegrity:
             ),
             sources=["https://example.com/a", "https://example.com/b"],
         )
+        qa_config = _make_qa_config()
 
-        findings = check_citation_integrity(draft)
+        findings = check_citation_integrity(draft, qa_config)
 
         errors = [f for f in findings if f.severity == "error"]
+        assert len(errors) == 1
+        assert errors[0].details["marker"] == 9
+
+    def test_custom_citation_pattern_sees_configured_marker_not_hardcoded_src(self):
+        """With a non-default citation_pattern (e.g. [ref:N]), the check must
+        use the configured pattern rather than a hardcoded [src:N] regex.
+
+        A [ref:1] marker referencing the draft's single source must be seen
+        as a valid reference (no "never referenced" warning), and an
+        orphaned [ref:9] marker must still be flagged as exactly one error.
+        This fails against a hardcoded [src:N] regex, which would see zero
+        markers at all here and wrongly warn that source 1 is unreferenced.
+        """
+        draft = _make_draft(
+            body_md=(
+                "A claim with a proper citation [ref:1]. Another claim "
+                "with a bad citation [ref:9]."
+            ),
+            sources=["https://example.com/a"],
+        )
+        qa_config = _make_qa_config(
+            source_attribution=SourceAttributionConfig(
+                require_citation_near_stats=True,
+                citation_pattern=r"\[ref:\d+\]",
+            )
+        )
+
+        findings = check_citation_integrity(draft, qa_config)
+
+        warnings = [f for f in findings if f.severity == "warning"]
+        errors = [f for f in findings if f.severity == "error"]
+        assert warnings == []
         assert len(errors) == 1
         assert errors[0].details["marker"] == 9
 
