@@ -583,6 +583,22 @@ class TestVoiceDriftConfigValidation:
         assert vd.min_avg_sentence_length == vd.max_avg_sentence_length
 
 
+class TestCitationPatternValidation:
+    def test_rejects_invalid_regex(self):
+        with pytest.raises(ValidationError, match="citation_pattern"):
+            SourceAttributionConfig(
+                require_citation_near_stats=True,
+                citation_pattern="[unclosed",
+            )
+
+    def test_accepts_valid_regex(self):
+        sa = SourceAttributionConfig(
+            require_citation_near_stats=True,
+            citation_pattern=r"\[src:\d+\]",
+        )
+        assert sa.citation_pattern == r"\[src:\d+\]"
+
+
 # ---------------------------------------------------------------------------
 # Config models — ClusterConfig family
 # ---------------------------------------------------------------------------

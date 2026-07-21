@@ -8,6 +8,7 @@ consume these models, not here.
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 from typing import Any, Literal
 
@@ -46,6 +47,16 @@ class SourceAttributionConfig(BaseModel):
 
     require_citation_near_stats: bool
     citation_pattern: str
+
+    @field_validator("citation_pattern")
+    @classmethod
+    def _citation_pattern_valid(cls, v: str) -> str:
+        try:
+            re.compile(v)
+        except re.error as exc:
+            msg = f"citation_pattern is not a valid regex: {v!r} ({exc})"
+            raise ValueError(msg) from exc
+        return v
 
 
 class VoiceDriftConfig(BaseModel):

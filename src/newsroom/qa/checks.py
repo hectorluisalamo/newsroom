@@ -6,6 +6,7 @@ All checks are pure, deterministic, and require no network or LLM calls.
 """
 
 import re
+from collections.abc import Callable
 from datetime import datetime, timezone
 
 from newsroom.models import Draft, QAConfig, QAFinding, QAReport, VoiceConstitution
@@ -213,10 +214,10 @@ def check_citation_integrity(draft: Draft) -> list[QAFinding]:
     return findings
 
 
-def _build_checks(draft, voice, qa_config):
-    """Registry of (name, thunk) for every QA check run by run_all_checks.
-    checks_run is derived from this list, so adding/removing a check here
-    keeps the reported checks_run in sync automatically."""
+def _build_checks(
+    draft: Draft, voice: VoiceConstitution, qa_config: QAConfig
+) -> list[tuple[str, Callable[[], list[QAFinding]]]]:
+    """Registry of (name, thunk) QA checks; checks_run is derived from this."""
     return [
         ("unsourced_stats", lambda: check_unsourced_stats(draft, qa_config)),
         ("hedging", lambda: check_hedging(draft, qa_config)),
