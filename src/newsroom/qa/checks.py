@@ -12,7 +12,9 @@ from newsroom.models import Draft, QAConfig, QAFinding, QAReport, VoiceConstitut
 
 _PARAGRAPH_SPLIT_RE = re.compile(r"\n\n+")
 _SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?]+(?!\d)")
-_STATS_RE = re.compile(r"[$]?\d[\d,]*\.?\d*%?")
+_STATS_RE = re.compile(
+    r"\$\d[\d,]*(?:\.\d+)?|\d[\d,]*\.\d+%?|\d[\d,]*%|\d{1,3}(?:,\d{3})+"
+)
 _CITATION_MARKER_RE = re.compile(r"\[src:(\d+)\]")
 
 
@@ -167,11 +169,15 @@ def check_citation_integrity(draft: Draft) -> list[QAFinding]:
     findings: list[QAFinding] = []
     source_count = len(draft.sources)
     referenced: set[int] = set()
+    seen_orphans: set[int] = set()
 
     for match in _CITATION_MARKER_RE.finditer(draft.body_md):
         marker_n = int(match.group(1))
         referenced.add(marker_n)
         if marker_n < 1 or marker_n > source_count:
+            if marker_n in seen_orphans:
+                continue
+            seen_orphans.add(marker_n)
             findings.append(
                 QAFinding(
                     check_name="citation_integrity",
@@ -207,6 +213,18 @@ def check_citation_integrity(draft: Draft) -> list[QAFinding]:
     return findings
 
 
+def _build_checks(draft, voice, qa_config):
+    """Registry of (name, thunk) for every QA check run by run_all_checks.
+    checks_run is derived from this list, so adding/removing a check here
+    keeps the reported checks_run in sync automatically."""
+    return [
+        ("unsourced_stats", lambda: check_unsourced_stats(draft, qa_config)),
+        ("hedging", lambda: check_hedging(draft, qa_config)),
+        ("voice_drift", lambda: check_voice_drift(draft, voice, qa_config)),
+        ("citation_integrity", lambda: check_citation_integrity(draft)),
+    ]
+
+
 def run_all_checks(
     draft: Draft,
     voice: VoiceConstitution,
@@ -216,18 +234,12 @@ def run_all_checks(
 
     The report passes iff no error-severity findings exist.
     """
-    checks_run = [
-        "unsourced_stats",
-        "hedging",
-        "voice_drift",
-        "citation_integrity",
-    ]
+    checks = _build_checks(draft, voice, qa_config)
+    checks_run = [name for name, _ in checks]
 
     findings: list[QAFinding] = []
-    findings.extend(check_unsourced_stats(draft, qa_config))
-    findings.extend(check_hedging(draft, qa_config))
-    findings.extend(check_voice_drift(draft, voice, qa_config))
-    findings.extend(check_citation_integrity(draft))
+    for _, thunk in checks:
+        findings.extend(thunk())
 
     passed = not any(finding.severity == "error" for finding in findings)
 

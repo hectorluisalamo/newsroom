@@ -377,14 +377,14 @@ def _make_report(
         if findings is not None
         else [
             QAFinding(
-                check_name="check_hedging",
+                check_name="hedging",
                 severity="warning",
                 location="paragraph-1",
                 message="Hedging ratio exceeds threshold.",
                 details={"ratio": 0.2},
             )
         ],
-        checks_run=["check_hedging"],
+        checks_run=["hedging"],
         generated_at=_NOW,
     )
 
@@ -450,9 +450,9 @@ class TestRenderReportJson:
         assert parsed["beat"] == "science_tech"
         assert parsed["pitch_id"] == "p1"
         assert parsed["passed"] is True
-        assert parsed["checks_run"] == ["check_hedging"]
+        assert parsed["checks_run"] == ["hedging"]
         assert len(parsed["findings"]) == 1
-        assert parsed["findings"][0]["check_name"] == "check_hedging"
+        assert parsed["findings"][0]["check_name"] == "hedging"
 
     def test_repeated_calls_are_byte_identical(self):
         report = _make_report()

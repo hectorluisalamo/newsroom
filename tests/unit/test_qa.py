@@ -117,6 +117,66 @@ class TestCheckUnsourcedStats:
 
         assert findings == []
 
+    def test_bare_year_does_not_trigger_finding(self):
+        draft = _make_draft(body_md="The 2026 study found no correlation.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert findings == []
+
+    def test_bare_small_integer_does_not_trigger_finding(self):
+        draft = _make_draft(body_md="The iPhone 15 launched.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert findings == []
+
+    def test_ungrouped_large_integer_does_not_trigger_finding(self):
+        draft = _make_draft(body_md="The device cost about 500000 to build.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert findings == []
+
+    def test_dollar_amount_still_flags_when_unsourced(self):
+        draft = _make_draft(body_md="The company raised $1.2B last quarter.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert len(findings) == 1
+        assert findings[0].check_name == "unsourced_stats"
+
+    def test_percent_still_flags_when_unsourced(self):
+        draft = _make_draft(body_md="Adoption grew by 45% last year.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert len(findings) == 1
+        assert findings[0].check_name == "unsourced_stats"
+
+    def test_decimal_still_flags_when_unsourced(self):
+        draft = _make_draft(body_md="Revenue grew 3.5 last quarter.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert len(findings) == 1
+        assert findings[0].check_name == "unsourced_stats"
+
+    def test_comma_grouped_number_still_flags_when_unsourced(self):
+        draft = _make_draft(body_md="The event drew a crowd of 1,200 people.")
+        qa_config = _make_qa_config()
+
+        findings = check_unsourced_stats(draft, qa_config)
+
+        assert len(findings) == 1
+        assert findings[0].check_name == "unsourced_stats"
+
 
 class TestCheckHedging:
     def test_flags_when_hedging_ratio_exceeds_max(self):
@@ -307,6 +367,21 @@ class TestCheckCitationIntegrity:
 
         assert findings == []
 
+    def test_repeated_orphaned_marker_yields_single_finding(self):
+        draft = _make_draft(
+            body_md=(
+                "A claim with a bad citation [src:9]. Another claim "
+                "repeats the same bad citation [src:9]."
+            ),
+            sources=["https://example.com/a", "https://example.com/b"],
+        )
+
+        findings = check_citation_integrity(draft)
+
+        errors = [f for f in findings if f.severity == "error"]
+        assert len(errors) == 1
+        assert errors[0].details["marker"] == 9
+
 
 class TestRunAllChecks:
     def test_builds_report_with_checks_run_and_metadata(self):
@@ -353,3 +428,57 @@ class TestRunAllChecks:
         assert report.passed is True
         assert len(report.findings) >= 1
         assert all(f.severity != "error" for f in report.findings)
+
+    def test_checks_run_matches_default_registry(self):
+        draft = _make_draft(body_md="Anything [src:1].")
+        voice = _make_voice()
+        qa_config = _make_qa_config()
+
+        report = run_all_checks(draft, voice, qa_config)
+
+        assert report.checks_run == [
+            "unsourced_stats",
+            "hedging",
+            "voice_drift",
+            "citation_integrity",
+        ]
+
+    def test_checks_run_reflects_added_check(self, monkeypatch):
+        import newsroom.qa.checks as checks_module
+
+        real_build_checks = checks_module._build_checks
+
+        def _build_checks_with_extra(draft, voice, qa_config):
+            return [
+                *real_build_checks(draft, voice, qa_config),
+                ("extra_check", lambda: []),
+            ]
+
+        monkeypatch.setattr(checks_module, "_build_checks", _build_checks_with_extra)
+
+        draft = _make_draft(body_md="Anything [src:1].")
+        voice = _make_voice()
+        qa_config = _make_qa_config()
+
+        report = checks_module.run_all_checks(draft, voice, qa_config)
+
+        assert "extra_check" in report.checks_run
+        assert len(report.checks_run) == 5
+
+    def test_checks_run_reflects_removed_check(self, monkeypatch):
+        import newsroom.qa.checks as checks_module
+
+        def _build_checks_only_unsourced_stats(draft, voice, qa_config):
+            return [("unsourced_stats", lambda: [])]
+
+        monkeypatch.setattr(
+            checks_module, "_build_checks", _build_checks_only_unsourced_stats
+        )
+
+        draft = _make_draft(body_md="Anything [src:1].")
+        voice = _make_voice()
+        qa_config = _make_qa_config()
+
+        report = checks_module.run_all_checks(draft, voice, qa_config)
+
+        assert report.checks_run == ["unsourced_stats"]
