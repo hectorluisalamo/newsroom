@@ -5,9 +5,16 @@
 import json
 from datetime import date, datetime, timezone
 
-import pytest
-
-from newsroom.models import BriefCluster, BriefPack, Draft, FeedItem, Pitch, PitchSet
+from newsroom.models import (
+    BriefCluster,
+    BriefPack,
+    Draft,
+    FeedItem,
+    Pitch,
+    PitchSet,
+    QAFinding,
+    QAReport,
+)
 from newsroom.render.render import (
     render_brief_json,
     render_brief_md,
@@ -356,6 +363,32 @@ class TestRenderPitchesMd:
             assert f"  - {url}" in p1_section
 
 
+def _make_report(
+    *,
+    passed: bool = True,
+    findings: list[QAFinding] | None = None,
+) -> QAReport:
+    return QAReport(
+        beat="science_tech",
+        date=date(2026, 1, 15),
+        pitch_id="p1",
+        passed=passed,
+        findings=findings
+        if findings is not None
+        else [
+            QAFinding(
+                check_name="hedging",
+                severity="warning",
+                location="paragraph-1",
+                message="Hedging ratio exceeds threshold.",
+                details={"ratio": 0.2},
+            )
+        ],
+        checks_run=["hedging"],
+        generated_at=_NOW,
+    )
+
+
 class TestRenderDraftJson:
     def test_round_trips_as_valid_json(self):
         draft = _make_draft()
@@ -407,10 +440,24 @@ class TestRenderDraftMd:
         assert "2. https://example.com/b" in sources_section
 
 
-class TestUnimplementedRenderers:
-    """Pins the Night-3/4 boundary: QA-report rendering is not yet
-    implemented (report.json is Night 4)."""
+class TestRenderReportJson:
+    def test_round_trips_as_valid_json(self):
+        report = _make_report()
 
-    def test_render_report_json_raises_not_implemented(self):
-        with pytest.raises(NotImplementedError):
-            render_report_json(None)
+        rendered = render_report_json(report)
+        parsed = json.loads(rendered)
+
+        assert parsed["beat"] == "science_tech"
+        assert parsed["pitch_id"] == "p1"
+        assert parsed["passed"] is True
+        assert parsed["checks_run"] == ["hedging"]
+        assert len(parsed["findings"]) == 1
+        assert parsed["findings"][0]["check_name"] == "hedging"
+
+    def test_repeated_calls_are_byte_identical(self):
+        report = _make_report()
+
+        first = render_report_json(report)
+        second = render_report_json(report)
+
+        assert first == second
