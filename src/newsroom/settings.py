@@ -88,7 +88,8 @@ def _parse_voice_markdown(text: str, file_path: Path) -> dict[str, list[str]]:
 
     Sections are H2 headers matched exactly. Only '- ' (hyphen-space) bullets
     are recognized. Non-bullet content, blank lines, numbered lists, and
-    asterisk bullets are ignored.
+    asterisk bullets are ignored. A single layer of matched surrounding quote
+    characters (`"..."` or `'...'`) is stripped from each bullet's text.
     """
     sections: dict[str, list[str]] = {}
     current_section: str | None = None
@@ -105,6 +106,13 @@ def _parse_voice_markdown(text: str, file_path: Path) -> dict[str, list[str]]:
             continue
         if current_section is not None and stripped.startswith("- "):
             bullet_text = stripped[2:].strip()
+            is_quoted = (
+                len(bullet_text) >= 2
+                and bullet_text[0] == bullet_text[-1]
+                and bullet_text[0] in "\"'"
+            )
+            if is_quoted:
+                bullet_text = bullet_text[1:-1]
             if bullet_text:
                 sections[current_section].append(bullet_text)
 

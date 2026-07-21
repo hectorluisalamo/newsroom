@@ -232,7 +232,9 @@ class TestLoadVoiceGolden:
         assert len(voice.beliefs) > 0
         assert len(voice.taboo_phrases) > 0
         # Voice file uses quoted phrases: - "It remains to be seen"
-        assert '"It remains to be seen"' in voice.taboo_phrases
+        # Parser strips the matched surrounding quotes, so the parsed
+        # phrase is unquoted.
+        assert "It remains to be seen" in voice.taboo_phrases
 
 
 # ---------------------------------------------------------------------------
@@ -291,6 +293,17 @@ class TestLoadVoice:
     def test_missing_voices_dir_raises(self, tmp_path):
         with pytest.raises(ConfigError):
             load_voice("test", tmp_path)
+
+    def test_strips_matched_surrounding_quotes_from_bullets(self, tmp_path):
+        voices = tmp_path / "voices"
+        voices.mkdir()
+        quoted_voice_md = _VALID_VOICE_MD.replace(
+            "- It remains to be seen", '- "Some Phrase"'
+        )
+        (voices / "quoted.md").write_text(quoted_voice_md)
+        voice = load_voice("quoted", tmp_path)
+        assert "Some Phrase" in voice.taboo_phrases
+        assert '"Some Phrase"' not in voice.taboo_phrases
 
     def test_missing_section_raises(self, tmp_path):
         voices = tmp_path / "voices"

@@ -14,9 +14,10 @@ from newsroom.draft.provider import LLMProvider
 from newsroom.draft.writer import write_draft
 from newsroom.ingestion.rss import fetch_all_feeds, fetch_local_feeds
 from newsroom.logging_config import setup_logging
-from newsroom.models import BriefPack, PitchSet
+from newsroom.models import BriefPack, Draft, PitchSet
 from newsroom.normalize.normalize import normalize_all
 from newsroom.pitches.pitches import generate_pitches
+from newsroom.qa.checks import run_all_checks
 from newsroom.rank.rank import rank_clusters
 from newsroom.render.render import (
     render_brief_json,
@@ -25,6 +26,7 @@ from newsroom.render.render import (
     render_draft_md,
     render_pitches_json,
     render_pitches_md,
+    render_report_json,
 )
 from newsroom.time_anchor import resolve_now
 
@@ -206,6 +208,55 @@ def qa_cmd(
     date: str,
     out_dir: Path,
     verbose: bool = False,
+    config_dir: Path | None = None,
 ) -> None:
-    """Run QA checks on an existing draft and write a report."""
-    raise NotImplementedError
+    """Run QA checks on an existing draft and write a report.
+
+    `config_dir` defaults to `config/`, mirroring `draft_cmd`. Loads the
+    draft written by `draft_cmd`, runs the deterministic QA gate, and
+    writes `report.json` alongside it. Never raises on QA failure — the
+    report's `passed` field is the machine-readable signal; callers that
+    need a hard gate should inspect that field.
+    """
+    _validate_beat(beat)
+    setup_logging(verbose)
+    resolved_config_dir = config_dir if config_dir is not None else Path("config")
+
+    try:
+        selected_date = dt.date.fromisoformat(date)
+    except ValueError as exc:
+        msg = f"invalid --date {date!r}: expected ISO YYYY-MM-DD"
+        raise ValueError(msg) from exc
+
+    beat_dir = out_dir / selected_date.isoformat() / beat
+    draft_path = beat_dir / "draft.json"
+    if not draft_path.is_file():
+        msg = f"draft.json not found at {draft_path}"
+        raise ValueError(msg)
+    draft = Draft.model_validate_json(draft_path.read_text())
+
+    if draft.beat != beat:
+        msg = f"draft beat {draft.beat!r} does not match requested --beat {beat!r}"
+        raise ValueError(msg)
+    if draft.date != selected_date:
+        msg = (
+            f"draft date {draft.date.isoformat()!r} does not match "
+            f"requested --date {selected_date.isoformat()!r}"
+        )
+        raise ValueError(msg)
+
+    qa_config = settings.load_qa_config(resolved_config_dir)
+    voice = settings.load_voice(beat, resolved_config_dir)
+
+    report = run_all_checks(draft, voice, qa_config)
+
+    (beat_dir / "report.json").write_text(render_report_json(report))
+
+    logger.info(
+        "QA %s for beat=%s date=%s pitch_id=%s: %d finding(s)",
+        "PASSED" if report.passed else "FAILED",
+        beat,
+        date,
+        draft.pitch_id,
+        len(report.findings),
+    )
