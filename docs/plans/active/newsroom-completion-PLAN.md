@@ -125,7 +125,7 @@ stub signatures were placeholders, not locked contracts):**
   unit + integration + e2e on every project; with Night 2 landed, the pitch
   slice now has integration + per-module unit coverage. (E2E is Night 5.)
 
-### Night 3 (proposed) — `draft_cmd` with a mocked LLM provider
+### Night 3 — `draft_cmd` with a mocked LLM provider — DONE (PR #5)
 - Implement `draft/writer.py` (prompt assembly: pitch + brief excerpts + voice
   constitution + editor guidance, `[src:N]` citation convention per ADR-008)
   and wire `draft/anthropic_provider.py` behind the existing `LLMProvider` ABC
@@ -135,8 +135,21 @@ stub signatures were placeholders, not locked contracts):**
   Anthropic API in tests or in any unattended/CI run. This keeps the $0 /
   no-paid-API-calls guardrail intact for all future nights, not just Night 1.
 - Wire `draft_cmd` in `commands.py` (currently `raise NotImplementedError`).
+- **Result (merged `1458ef9`, PR #5):** `writer.py` (`assemble_prompt` +
+  `write_draft` with the `[src:N]` convention and a hard ≤2-retry word-count
+  cap), `anthropic_provider.py` (real `AnthropicProvider`; default model
+  migrated from the stale `claude-sonnet-4-20250514` to `claude-sonnet-5`,
+  text-block extraction robust to thinking blocks), `draft_cmd` wired with
+  **provider dependency-injection as the $0 money-seam** (tests inject a
+  `FakeLLMProvider`; the live provider is never constructed in verification,
+  with the conftest socket-block as backstop), plus `render_draft_md`/
+  `render_draft_json`. `bash scripts/verify.sh` → **240 passed**. Fresh-context
+  Fable review PASS + CodeRabbit CLI clean (3 majors fixed: `--date`
+  path-traversal, fragile text extraction, `target_words` not threaded into the
+  prompt). A live end-to-end LLM smoke-test (real key) is an **attended** step,
+  intentionally never run in CI/unattended.
 
-### Night 4 (proposed) — `qa_cmd` + QA checks
+### Night 4 — `qa_cmd` + QA checks — DONE (PR #6)
 - Implement `qa/checks.py` (`check_unsourced_stats`, `check_hedging`,
   `check_voice_drift`, `check_citation_integrity`, `run_all_checks`) per
   `config.example/qa.yaml` thresholds and `docs/architecture.md` §"Safety &
@@ -144,6 +157,25 @@ stub signatures were placeholders, not locked contracts):**
 - Wire `qa_cmd` in `commands.py`.
 - Add unit tests per check + an integration test running QA against
   `fixtures/science_tech/sample_draft_text.md`.
+- **Result (merged `c0bc581`, PR #6):** all 5 checks implemented pure/
+  deterministic (no network/LLM) + `run_all_checks` → `QAReport` (`passed` iff
+  zero error-severity findings), `render_report_json`, and `qa_cmd` wiring
+  (loads an existing `draft.json`, runs the checks, writes `report.json`; adds a
+  `--date` traversal guard, a missing-`draft.json` error, and a
+  `draft.beat`/`draft.date` consistency check). Both citation checks read the
+  single configured `citation_pattern` (no hardcoded-vs-config divergence);
+  `checks_run` is derived from a check registry, not a hardcoded list.
+  **Bundled bugfix:** `settings._parse_voice_markdown` was leaving literal
+  quotes on taboo phrases, so the taboo gate was a no-op against real config —
+  fixed (strip matched surrounding quotes). `bash scripts/verify.sh` →
+  **285 passed**. Fresh-context Fable review PASS (mutation-tested, no vacuous
+  checks) + CodeRabbit CLI clean; four rounds of GitHub claude[bot] review
+  addressed (word-boundary matching, decimal-safe sentence split, `re.error`
+  validation at config-load, single-source citations, matched-marker messages).
+- **Note (fixture truth → Night 5):** the referenced
+  `fixtures/science_tech/sample_draft_text.md` was a 0-byte placeholder, so the
+  integration test hand-builds a draft with known violations inline. Populating
+  a real draft fixture remains part of Night 5's fixture/doc-truth pass.
 
 ### Night 5 (proposed) — Real e2e coverage + fixture/doc truth pass
 - Add a real e2e test in `tests/e2e/test_cli.py` that invokes the CLI as a
