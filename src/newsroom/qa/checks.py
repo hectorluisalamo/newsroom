@@ -12,6 +12,9 @@ from datetime import datetime, timezone
 from newsroom.models import Draft, QAConfig, QAFinding, QAReport, VoiceConstitution
 
 _PARAGRAPH_SPLIT_RE = re.compile(r"\n\n+")
+# Splits on terminal punctuation and protects decimals (e.g. "3.5") but does
+# not special-case abbreviations (e.g. "U.S.", "Dr."), so abbreviation-heavy
+# prose may over-count sentences.
 _SENTENCE_SPLIT_RE = re.compile(r"(?<!\d)[.!?]+(?!\d)")
 _STATS_RE = re.compile(
     r"\$\d[\d,]*(?:\.\d+)?|\d[\d,]*\.\d+%?|\d[\d,]*%|\d{1,3}(?:,\d{3})+"
@@ -129,6 +132,8 @@ def check_voice_drift(
 
     sentences = _split_sentences(draft.body_md)
     if sentences:
+        # Counts raw markdown tokens (e.g. **word**, [src:1]) as words,
+        # acceptable for current lightly-formatted bodies.
         lengths = [len(sentence.split()) for sentence in sentences]
         max_len = qa_config.voice_drift.max_sentence_length
         for sentence_index, length in enumerate(lengths, start=1):
@@ -170,7 +175,9 @@ def check_citation_integrity(draft: Draft, qa_config: QAConfig) -> list[QAFindin
 
     Uses the same configured citation pattern as check_unsourced_stats so
     both checks agree on what counts as a citation marker. Verifies no
-    orphaned citations and no missing source entries.
+    orphaned citations and no missing source entries. Assumes
+    citation_pattern matches markers whose text contains the source number
+    as digits, per the [src:N] convention in ADR-008.
     """
     findings: list[QAFinding] = []
     source_count = len(draft.sources)
@@ -179,6 +186,9 @@ def check_citation_integrity(draft: Draft, qa_config: QAConfig) -> list[QAFindin
 
     citation_re = re.compile(qa_config.source_attribution.citation_pattern)
     for match in citation_re.finditer(draft.body_md):
+        # Assumes the matched marker text contains the source number as a
+        # digit run (the fixed [src:N] convention per ADR-008); a
+        # citation_pattern with no digits would silently skip this marker.
         digit_match = re.search(r"\d+", match.group())
         if digit_match is None:
             continue
@@ -192,9 +202,9 @@ def check_citation_integrity(draft: Draft, qa_config: QAConfig) -> list[QAFindin
                 QAFinding(
                     check_name="citation_integrity",
                     severity="error",
-                    location=f"marker [src:{marker_n}]",
+                    location=f"marker {match.group()}",
                     message=(
-                        f"Citation marker [src:{marker_n}] does not map to any "
+                        f"Citation marker {match.group()} does not map to any "
                         f"source (draft has {source_count} source(s))."
                     ),
                     details={"marker": marker_n, "source_count": source_count},

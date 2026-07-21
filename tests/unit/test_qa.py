@@ -433,6 +433,30 @@ class TestCheckCitationIntegrity:
         assert len(errors) == 1
         assert errors[0].details["marker"] == 9
 
+    def test_orphan_finding_reports_actual_matched_marker_text(self):
+        """location/message must surface the marker text the configured
+        citation_pattern actually matched, not a hardcoded [src:N] string.
+        """
+        draft = _make_draft(
+            body_md="A claim with a bad citation [ref:9].",
+            sources=["https://example.com/a"],
+        )
+        qa_config = _make_qa_config(
+            source_attribution=SourceAttributionConfig(
+                require_citation_near_stats=True,
+                citation_pattern=r"\[ref:\d+\]",
+            )
+        )
+
+        findings = check_citation_integrity(draft, qa_config)
+
+        errors = [f for f in findings if f.severity == "error"]
+        assert len(errors) == 1
+        assert "[ref:9]" in errors[0].location
+        assert "[ref:9]" in errors[0].message
+        assert "[src:" not in errors[0].location
+        assert "[src:" not in errors[0].message
+
 
 class TestRunAllChecks:
     def test_builds_report_with_checks_run_and_metadata(self):
