@@ -42,5 +42,5 @@ Every new Python file must begin with a two-line comment, each line prefixed wit
 
 ```bash
 bash scripts/verify.sh          # lint + format check + tests
-bash scripts/verify_content.sh  # content verification (Phase 7+)
+bash scripts/verify_content.sh  # content verification: pitch output vs. golden fixture
 ```

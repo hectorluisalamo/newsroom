@@ -1,8 +1,9 @@
 # Newsroom Completion Plan
 
-**Status:** Active — multi-night build. This is a self-contained living doc; a cold
-session should be able to resume from this file alone (plus `CLAUDE.md`,
-`docs/architecture.md`, `docs/decisions.md`).
+**Status:** Complete — all five nights landed. Night 5 (real e2e coverage +
+fixture/doc truth pass) finished 2026-07-22, completing the roadmap. This is a
+self-contained living doc; a cold session can reconstruct the build history from
+this file alone (plus `CLAUDE.md`, `docs/architecture.md`, `docs/decisions.md`).
 
 **Guardrails for every night:** $0 / no paid API calls. The pitch step is fully
 deterministic (no LLM). The draft step (future night) must use a **mocked**
@@ -177,7 +178,7 @@ stub signatures were placeholders, not locked contracts):**
   integration test hand-builds a draft with known violations inline. Populating
   a real draft fixture remains part of Night 5's fixture/doc-truth pass.
 
-### Night 5 (proposed) — Real e2e coverage + fixture/doc truth pass
+### Night 5 — DONE (2026-07-22) — Real e2e coverage + fixture/doc truth pass
 - Add a real e2e test in `tests/e2e/test_cli.py` that invokes the CLI as a
   subprocess for the full `pitch` (and, once Night 3/4 land, `draft` + `qa`)
   flow against fixtures, asserting on actual output files — not just
@@ -256,8 +257,8 @@ stub signatures were placeholders, not locked contracts):**
   exactly 3 `source_urls`, distinct `angle` values (`trend_analysis`,
   `skeptics_take`, `human_impact`).
 
-**Immediate next step:** Night 2 — replace the 8 remaining placeholder unit
-test files with real coverage of each pipeline module's edge cases (see §2).
+**Historical Night-1 next step:** Night 2 — replace the remaining placeholder
+unit test files with real coverage of each pipeline module's edge cases (see §2).
 
 **Known issues / risks carried forward:**
 1. Pitch/cluster `title`/`label` quality is weak — `BriefCluster.label`
@@ -265,12 +266,10 @@ test files with real coverage of each pipeline module's edge cases (see §2).
    "trial", "launch") rather than a fuller phrase. Functionally correct
    (drives clustering, ranking, and pitch generation correctly) but not
    polished copy. Flagged for a future polish pass, not blocking.
-2. `NEWSROOM_MODEL` in `.env.example` is a stale/placeholder model ID
-   (`claude-sonnet-4-20250514`) — deferred to Night 3/5 per §2, since nothing
-   consumes it until the draft step exists. **Do not treat this ID as current
-   when Night 3 arrives — re-verify against current Anthropic docs.**
-3. `verify_content.sh` is still the Phase-0 placeholder (`echo "...
-   placeholder..."; exit 0`) — real content verification is Night 5 scope.
+2. The Night-1 model configuration note is historical; the `.env.example`
+   default was updated to the current Sonnet-5 id during Night 5.
+3. The Night-1 `verify_content.sh` placeholder note is historical; real content
+   verification was implemented during Night 5.
 4. `AgglomerativeClustering(metric="cosine", ...)` in `cluster/tfidf.py`
    requires scikit-learn's `metric` param name (not the older `affinity`,
    removed in modern sklearn). Verified against the installed environment

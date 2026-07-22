@@ -6,9 +6,21 @@ Parsing only — command logic lives in commands.py.
 """
 
 import argparse
+import os
 import sys
 
 from newsroom import commands
+
+# Truthy values that activate the $0 in-memory fake-LLM seam. Deliberately
+# narrow: an unset var, "", "0", and "false" all leave the real
+# AnthropicProvider path untouched, so the common "set to 0/false to
+# disable" idiom can't accidentally flip the CLI into fake mode.
+_TRUTHY_ENV_VALUES = {"1", "true", "yes", "on"}
+
+
+def _fake_llm_enabled() -> bool:
+    """Return True only when NEWSROOM_FAKE_LLM is set to a genuine truthy value."""
+    return os.environ.get("NEWSROOM_FAKE_LLM", "").strip().lower() in _TRUTHY_ENV_VALUES
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -126,6 +138,15 @@ def main(argv: list[str] | None = None) -> None:
 
     out_dir = Path(args.out_dir)
 
+    # config-dir seam: mirrors the NEWSROOM_FAKE_LLM env idiom above. Unset
+    # (the production default) leaves `config_dir=None`, and each command
+    # resolves that to `config/` itself. Setting NEWSROOM_CONFIG_DIR points
+    # every command at an alternate config directory instead — e.g. the
+    # e2e suite points it at the committed `config.example/` so subprocess
+    # runs never depend on the gitignored, developer-local `config/` dir.
+    config_dir_env = os.environ.get("NEWSROOM_CONFIG_DIR")
+    config_dir = Path(config_dir_env) if config_dir_env else None
+
     if args.command == "pitch":
         commands.pitch_cmd(
             beat=args.beat,
@@ -134,8 +155,19 @@ def main(argv: list[str] | None = None) -> None:
             out_dir=out_dir,
             source_override=args.source_override,
             verbose=args.verbose,
+            config_dir=config_dir,
         )
     elif args.command == "draft":
+        # $0 e2e seam: when NEWSROOM_FAKE_LLM is set to a truthy value,
+        # inject the in-memory FakeLLMProvider instead of leaving `provider`
+        # unset, so draft_cmd never falls through to constructing a real
+        # (paid) AnthropicProvider. Unset (the production default) leaves
+        # `provider=None` and the real provider path is untouched.
+        provider = None
+        if _fake_llm_enabled():
+            from newsroom.draft.fake_provider import FakeLLMProvider
+
+            provider = FakeLLMProvider()
         commands.draft_cmd(
             beat=args.beat,
             date=args.date,
@@ -144,6 +176,8 @@ def main(argv: list[str] | None = None) -> None:
             now=args.now,
             out_dir=out_dir,
             verbose=args.verbose,
+            config_dir=config_dir,
+            provider=provider,
         )
     elif args.command == "qa":
         commands.qa_cmd(
@@ -151,6 +185,7 @@ def main(argv: list[str] | None = None) -> None:
             date=args.date,
             out_dir=out_dir,
             verbose=args.verbose,
+            config_dir=config_dir,
         )
 
 
