@@ -3,11 +3,9 @@
 # ABOUTME: brief.json schema and golden output, and asserts determinism.
 set -euo pipefail
 
-# Scope: the deterministic `pitch` step only (no LLM calls, no network —
-# `--source-override` forces fixture reads). `draft`/`qa` content
-# verification (which would require NEWSROOM_FAKE_LLM=1 to stay LLM-call
-# free) is not yet covered here; see docs/architecture.md's Verification
-# section for the full intended scope of this script.
+# Scope: deterministic `pitch` verification against fixture data only
+# (no LLM calls, no network — `--source-override` forces fixture reads).
+# This script does not run `draft` or `qa` verification.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"

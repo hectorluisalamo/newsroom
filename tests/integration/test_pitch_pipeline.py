@@ -75,14 +75,16 @@ class TestPitchPipeline:
             assert pitch["angle"]
 
     def test_brief_matches_golden_fixture(self, tmp_path):
-        """brief.json must equal the pinned golden fixture byte-for-byte.
+        """brief.json must equal the pinned golden fixture (parsed-JSON value equality).
 
         `generated_at` is set from the fixed `--now` passed to pitch_cmd
         (not `datetime.now()`), so the whole document is deterministic
         under a fixed anchor with no volatile fields to exclude — a full
-        equality assertion is meaningful, not vacuous. If pipeline output
-        drifts (ingestion, dedupe, clustering, ranking, or rendering),
-        this test fails on the diff.
+        equality assertion is meaningful, not vacuous. Both sides are parsed
+        with `json.loads`, so the comparison is on values (key order and
+        whitespace are not significant). If pipeline output drifts
+        (ingestion, dedupe, clustering, ranking, or rendering), this test
+        fails on the diff.
         """
         beat_dir = _run_pitch_cmd(tmp_path)
         actual = json.loads((beat_dir / "brief.json").read_text())
