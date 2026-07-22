@@ -6,6 +6,7 @@ Parsing only — command logic lives in commands.py.
 """
 
 import argparse
+import os
 import sys
 
 from newsroom import commands
@@ -136,6 +137,16 @@ def main(argv: list[str] | None = None) -> None:
             verbose=args.verbose,
         )
     elif args.command == "draft":
+        # $0 e2e seam: when NEWSROOM_FAKE_LLM is set, inject the in-memory
+        # FakeLLMProvider instead of leaving `provider` unset, so draft_cmd
+        # never falls through to constructing a real (paid) AnthropicProvider.
+        # Unset (the production default) leaves `provider=None` and the real
+        # provider path is untouched.
+        provider = None
+        if os.environ.get("NEWSROOM_FAKE_LLM"):
+            from newsroom.draft.fake_provider import FakeLLMProvider
+
+            provider = FakeLLMProvider()
         commands.draft_cmd(
             beat=args.beat,
             date=args.date,
@@ -144,6 +155,7 @@ def main(argv: list[str] | None = None) -> None:
             now=args.now,
             out_dir=out_dir,
             verbose=args.verbose,
+            provider=provider,
         )
     elif args.command == "qa":
         commands.qa_cmd(
