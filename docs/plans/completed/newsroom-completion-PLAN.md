@@ -1,8 +1,9 @@
 # Newsroom Completion Plan
 
-**Status:** Active — multi-night build. This is a self-contained living doc; a cold
-session should be able to resume from this file alone (plus `CLAUDE.md`,
-`docs/architecture.md`, `docs/decisions.md`).
+**Status:** Complete — all five nights landed. Night 5 (real e2e coverage +
+fixture/doc truth pass) finished 2026-07-22, completing the roadmap. This is a
+self-contained living doc; a cold session can reconstruct the build history from
+this file alone (plus `CLAUDE.md`, `docs/architecture.md`, `docs/decisions.md`).
 
 **Guardrails for every night:** $0 / no paid API calls. The pitch step is fully
 deterministic (no LLM). The draft step (future night) must use a **mocked**
@@ -177,7 +178,7 @@ stub signatures were placeholders, not locked contracts):**
   integration test hand-builds a draft with known violations inline. Populating
   a real draft fixture remains part of Night 5's fixture/doc-truth pass.
 
-### Night 5 (proposed) — Real e2e coverage + fixture/doc truth pass
+### Night 5 — DONE (2026-07-22) — Real e2e coverage + fixture/doc truth pass
 - Add a real e2e test in `tests/e2e/test_cli.py` that invokes the CLI as a
   subprocess for the full `pitch` (and, once Night 3/4 land, `draft` + `qa`)
   flow against fixtures, asserting on actual output files — not just
