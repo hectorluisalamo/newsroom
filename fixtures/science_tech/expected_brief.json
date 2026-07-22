@@ -1,1 +1,206 @@
-{}
+{
+  "beat": "science_tech",
+  "date": "2026-01-15",
+  "since": "48h",
+  "total_items_ingested": 12,
+  "total_items_after_dedupe": 12,
+  "clusters": [
+    {
+      "cluster_id": "33278b982f6efb2e",
+      "label": "chip",
+      "items": [
+        {
+          "item_id": "7ac9befc3e821ba1cf0dda9b2f147dcc33008cd4a773da2ec87942141db5f934",
+          "title": "Commerce Department Tightens AI Chip Export Rules to China",
+          "url": "https://example.com/tech-wire-daily/ai-chip-export-rules",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-14T09:00:00Z",
+          "summary": "The U.S. Commerce Department announced new export controls restricting advanced AI chip exports to China, citing national security concerns over artificial intelligence chip technology.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "9f303b142d032125af1e3118c8c4515d2e788c0103a27d98b216dc785966ef13",
+          "title": "Chipmakers Brace for New AI Export Restrictions",
+          "url": "https://example.com/tech-wire-daily/chipmakers-brace-restrictions",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-14T15:00:00Z",
+          "summary": "Semiconductor companies are adjusting supply chains after the Commerce Department's latest AI chip export restrictions targeting China took effect this week.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "b19593248451c200569f8fdb7692a10f6d8c9ad084a530731c19ed05fc79f5dc",
+          "title": "White House Defends AI Chip Export Controls Amid Industry Pushback",
+          "url": "https://example.org/science-desk-weekly/white-house-defends-export-controls",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-15T08:00:00Z",
+          "summary": "Administration officials defended the new AI chip export restrictions to China, arguing the controls on artificial intelligence chip technology protect national security.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        }
+      ],
+      "centroid_keywords": [
+        "chip",
+        "export",
+        "ai chip",
+        "chip export",
+        "china"
+      ],
+      "recency_score": 1.0,
+      "source_diversity": 2,
+      "size": 3
+    },
+    {
+      "cluster_id": "85f30d5b3ceb9b34",
+      "label": "trial",
+      "items": [
+        {
+          "item_id": "303b5f839591f133b7e3b5887a02aae56e21ac248df1399388a6926dbebd8dd9",
+          "title": "Gene-Editing Therapy Trial Shows Promising Early Results",
+          "url": "https://example.org/science-desk-weekly/gene-editing-trial-results",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-13T16:00:00Z",
+          "summary": "A gene-editing therapy trial using CRISPR technology reported promising early results for patients with a rare genetic blood disorder.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "41be0109323543d9464bc0adc64568e8239fabac9e72fdfd07cb44d900fce863",
+          "title": "Regulators Scrutinize Gene-Editing Therapy Trial Data",
+          "url": "https://example.org/science-desk-weekly/gene-editing-regulators-scrutinize",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-14T13:00:00Z",
+          "summary": "Health regulators are closely reviewing data from the gene-editing therapy trial before deciding on approval for wider use.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "4c1b43c1547384b26bc64f436c0d4bbbbe3896e185d5ec456ab56584bda1ec33",
+          "title": "Patients Await Access After Gene-Editing Therapy Trial Success",
+          "url": "https://example.com/tech-wire-daily/gene-editing-trial-access",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-15T06:00:00Z",
+          "summary": "Patient advocacy groups are pushing for expanded access following the gene-editing therapy trial's encouraging results this month.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        }
+      ],
+      "centroid_keywords": [
+        "trial",
+        "therapy trial",
+        "therapy",
+        "gene editing",
+        "gene"
+      ],
+      "recency_score": 0.9523809523809523,
+      "source_diversity": 2,
+      "size": 3
+    },
+    {
+      "cluster_id": "720b1bc20f2cc187",
+      "label": "launch",
+      "items": [
+        {
+          "item_id": "e5c11ab57a27126578b71bdd35ea4149a814866b7fb14f3268c802d3d6b99e01",
+          "title": "Private Rocket Company Launches New Satellite Constellation",
+          "url": "https://example.com/tech-wire-daily/satellite-constellation-launch",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-13T18:00:00Z",
+          "summary": "A private orbital launch company successfully deployed the first batch of its new satellite constellation, expanding broadband coverage.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "acae52a29bb18835f7686721c2beceb4c6a0effcc079a5be0798778c10c8d152",
+          "title": "Satellite Constellation Launch Raises Orbital Debris Concerns",
+          "url": "https://example.com/tech-wire-daily/orbital-debris-concerns",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-14T07:00:00Z",
+          "summary": "Astronomers warn the latest satellite constellation launch from the private orbital launch company could worsen orbital debris and light pollution.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "77a7b770fd23a9be796231d3caaf5d6333ec0e4e9f1b0ce5bc3f9495e0ca5298",
+          "title": "Rival Firms Race to Match New Satellite Constellation Launch",
+          "url": "https://example.org/science-desk-weekly/rival-firms-satellite-race",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-14T21:00:00Z",
+          "summary": "Competing companies are accelerating their own orbital launch plans after a rival's satellite constellation launch dominated headlines this week.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        }
+      ],
+      "centroid_keywords": [
+        "launch",
+        "satellite constellation",
+        "satellite",
+        "constellation",
+        "orbital"
+      ],
+      "recency_score": 0.7380952380952381,
+      "source_diversity": 2,
+      "size": 3
+    },
+    {
+      "cluster_id": "9c2ac80fa6a69c97",
+      "label": "quantum computing",
+      "items": [
+        {
+          "item_id": "0b3dc0a8da25a8bde0603854cfaf8c94ea08455eca8b1b9526ff03b3245dd1d5",
+          "title": "Startup Claims Breakthrough in Error-Corrected Quantum Computing",
+          "url": "https://example.com/tech-wire-daily/quantum-error-correction-breakthrough",
+          "source_name": "Tech Wire Daily",
+          "source_feed_url": "https://example.com/tech-wire-daily",
+          "published_at": "2026-01-13T14:00:00Z",
+          "summary": "A quantum computing startup announced it achieved a new milestone in error-corrected qubits, a step toward practical quantum computing hardware.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "437a735b1d5c99142768cdff3fd585c2bc62364dd81bcaafa5df14d66e3bb7a8",
+          "title": "Quantum Computing Error Correction Milestone Draws Scrutiny",
+          "url": "https://example.org/science-desk-weekly/quantum-milestone-scrutiny",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-13T20:00:00Z",
+          "summary": "Independent researchers are reviewing claims of an error-corrected qubits milestone in quantum computing, questioning whether the results can be replicated.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        },
+        {
+          "item_id": "571ee58ff214802ed584819c05da6712b3267c2cbc574fc1c027457dc74f16da",
+          "title": "Investors Pour Money Into Error-Corrected Quantum Computing Startups",
+          "url": "https://example.org/science-desk-weekly/quantum-startups-investment",
+          "source_name": "Science Desk Weekly",
+          "source_feed_url": "https://example.org/science-desk-weekly",
+          "published_at": "2026-01-14T11:00:00Z",
+          "summary": "Venture capital is flowing into quantum computing startups following claims of an error-corrected qubits breakthrough earlier this week.",
+          "raw_tags": [],
+          "beat": "science_tech"
+        }
+      ],
+      "centroid_keywords": [
+        "quantum computing",
+        "quantum",
+        "computing",
+        "error",
+        "error corrected"
+      ],
+      "recency_score": 0.5,
+      "source_diversity": 2,
+      "size": 3
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

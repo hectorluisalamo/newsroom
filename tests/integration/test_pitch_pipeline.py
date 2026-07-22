@@ -74,6 +74,21 @@ class TestPitchPipeline:
             assert pitch["cluster_id"]
             assert pitch["angle"]
 
+    def test_brief_matches_golden_fixture(self, tmp_path):
+        """brief.json must equal the pinned golden fixture byte-for-byte.
+
+        `generated_at` is set from the fixed `--now` passed to pitch_cmd
+        (not `datetime.now()`), so the whole document is deterministic
+        under a fixed anchor with no volatile fields to exclude — a full
+        equality assertion is meaningful, not vacuous. If pipeline output
+        drifts (ingestion, dedupe, clustering, ranking, or rendering),
+        this test fails on the diff.
+        """
+        beat_dir = _run_pitch_cmd(tmp_path)
+        actual = json.loads((beat_dir / "brief.json").read_text())
+        expected = json.loads((_FIXTURE_DIR / "expected_brief.json").read_text())
+        assert actual == expected
+
     def test_deterministic_across_repeated_runs(self, tmp_path):
         """Same --now and same fixtures must produce byte-identical pitch output."""
         beat_dir_a = _run_pitch_cmd(tmp_path / "run_a")

@@ -33,7 +33,7 @@ Copy `.env.example` to `.env` and fill in your values:
 
 ```
 ANTHROPIC_API_KEY=     # Required for draft generation
-NEWSROOM_MODEL=        # LLM model ID (default: claude-sonnet-4-20250514)
+NEWSROOM_MODEL=        # LLM model ID (default: claude-sonnet-5)
 NEWSROOM_NOW=          # Optional: fixed ISO 8601 timestamp for deterministic runs
 ```
 
