@@ -257,8 +257,8 @@ stub signatures were placeholders, not locked contracts):**
   exactly 3 `source_urls`, distinct `angle` values (`trend_analysis`,
   `skeptics_take`, `human_impact`).
 
-**Immediate next step:** Night 2 — replace the 8 remaining placeholder unit
-test files with real coverage of each pipeline module's edge cases (see §2).
+**Historical Night-1 next step:** Night 2 — replace the remaining placeholder
+unit test files with real coverage of each pipeline module's edge cases (see §2).
 
 **Known issues / risks carried forward:**
 1. Pitch/cluster `title`/`label` quality is weak — `BriefCluster.label`
@@ -266,12 +266,10 @@ test files with real coverage of each pipeline module's edge cases (see §2).
    "trial", "launch") rather than a fuller phrase. Functionally correct
    (drives clustering, ranking, and pitch generation correctly) but not
    polished copy. Flagged for a future polish pass, not blocking.
-2. `NEWSROOM_MODEL` in `.env.example` is a stale/placeholder model ID
-   (`claude-sonnet-4-20250514`) — deferred to Night 3/5 per §2, since nothing
-   consumes it until the draft step exists. **Do not treat this ID as current
-   when Night 3 arrives — re-verify against current Anthropic docs.**
-3. `verify_content.sh` is still the Phase-0 placeholder (`echo "...
-   placeholder..."; exit 0`) — real content verification is Night 5 scope.
+2. The Night-1 model configuration note is historical; the `.env.example`
+   default was updated to the current Sonnet-5 id during Night 5.
+3. The Night-1 `verify_content.sh` placeholder note is historical; real content
+   verification was implemented during Night 5.
 4. `AgglomerativeClustering(metric="cosine", ...)` in `cluster/tfidf.py`
    requires scikit-learn's `metric` param name (not the older `affinity`,
    removed in modern sklearn). Verified against the installed environment
