@@ -58,7 +58,8 @@ from newsroom.models import BriefPack
 
 actual_path, golden_path = sys.argv[1], sys.argv[2]
 
-actual_text = open(actual_path, encoding="utf-8").read()
+with open(actual_path, encoding="utf-8") as fh:
+    actual_text = fh.read()
 
 # Schema-valid: must parse into the real BriefPack model, not just be JSON.
 try:
@@ -68,7 +69,8 @@ except Exception as exc:  # noqa: BLE001 - re-raised as a clear failure below
     sys.exit(1)
 
 actual = json.loads(actual_text)
-golden = json.loads(open(golden_path, encoding="utf-8").read())
+with open(golden_path, encoding="utf-8") as fh:
+    golden = json.loads(fh.read())
 
 if actual != golden:
     print("FAIL: brief.json does not match the golden fixture.", file=sys.stderr)

@@ -6,6 +6,11 @@ Lives in the production package (not tests/) so both the test suite and the
 CLI's ``NEWSROOM_FAKE_LLM`` seam (see ``newsroom.cli``) can import the same
 class. The class is inert unless instantiated, so importing it here carries
 no runtime cost or risk in production code paths that don't opt into it.
+
+This repo is run from source (``uv sync`` + ``python -m newsroom``, per
+README) and its CI never builds or publishes a wheel, so this module never
+reaches an end user even though ``pyproject.toml``'s wheel target would
+include it if a wheel were ever built.
 """
 
 from newsroom.draft.provider import LLMProvider, LLMResponse

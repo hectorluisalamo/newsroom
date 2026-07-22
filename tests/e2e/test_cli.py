@@ -30,13 +30,19 @@ def test_cli_help_shows_subcommands():
 def _run_cli(args: list[str], extra_env: dict[str, str] | None = None):
     """Run `python -m newsroom <args>` as a real subprocess against the repo.
 
-    cwd is the repo root so the CLI's default `config_dir=Path("config")`
-    resolves against the real (gitignored, locally-populated) config/ dir —
-    mirroring how the CLI is actually invoked. `extra_env` layers onto a
-    copy of the current environment (used to set NEWSROOM_FAKE_LLM=1 for
-    `draft`, which is what keeps this test suite at $0 spend).
+    cwd is the repo root. NEWSROOM_CONFIG_DIR defaults to `config.example/`
+    (the committed reference config) so this suite runs identically on a
+    fresh clone and in CI, where the gitignored, developer-local `config/`
+    directory `scripts/init_config.sh` populates doesn't exist. `extra_env`
+    layers onto a copy of the current environment (used to set
+    NEWSROOM_FAKE_LLM=1 for `draft`, which is what keeps this test suite at
+    $0 spend).
     """
-    env = {**os.environ, **(extra_env or {})}
+    env = {
+        **os.environ,
+        "NEWSROOM_CONFIG_DIR": "config.example",
+        **(extra_env or {}),
+    }
     return subprocess.run(
         [sys.executable, "-m", "newsroom", *args],
         cwd=_REPO_ROOT,
@@ -148,6 +154,8 @@ class TestCliEndToEnd:
 
         qa_result = _run_cli(
             [
+                "--now",
+                _FIXED_NOW,
                 "--out-dir",
                 str(out_dir),
                 "qa",
