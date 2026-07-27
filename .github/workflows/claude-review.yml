@@ -41,6 +41,21 @@ jobs:
             - Security implications
             - Performance considerations
 
+            ALWAYS open your top-level comment with ONE verdict line, exactly one of:
+              VERDICT: GOOD TO MERGE -- no blocking issues
+              VERDICT: MERGE AFTER FIXES -- N blocking issue(s)
+              VERDICT: DO NOT MERGE -- <one-line reason>
+
+            Then label EVERY finding [MAJOR], [MINOR] or [NIT].
+
+            A finding is MAJOR ONLY if it can cause incorrect behaviour, data loss, a
+            security issue, or a broken build. Style, naming, idiom, missing
+            documentation, test-coverage gaps, and performance at negligible scale are
+            NEVER major. If you are unsure whether something is major, it is not.
+
+            The verdict must FOLLOW FROM the labels: if any finding is [MAJOR], the
+            verdict cannot be "GOOD TO MERGE".
+
             Note: The PR branch is already checked out in the current working directory.
 
             Use `gh pr comment` for top-level feedback.
